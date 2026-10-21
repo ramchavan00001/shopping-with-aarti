@@ -1,0 +1,14 @@
+# Render Blueprint: Node web service serving the built SPA and the Hono API.
+services:
+  - type: web
+    name: shopping-with-aarti
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: MEDIA_BASE_URL
+        value: ""

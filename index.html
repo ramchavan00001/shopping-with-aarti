@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en-IN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Shopping with Aarti · Tried-on fashion finds</title>
+    <meta
+      name="description"
+      content="Watch Aarti's try-on reels and shop every look from Amazon, Flipkart, Meesho and Myntra in one tap."
+    />
+    <meta name="theme-color" content="#FBF7F3" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#141012" media="(prefers-color-scheme: dark)" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Shopping with Aarti" />
+    <meta property="og:description" content="Tried-on fashion finds from Amazon, Flipkart, Meesho and Myntra." />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://images.unsplash.com" />
+    <link rel="preconnect" href="https://assets.mixkit.co" />
+    <script>
+      // Apply the saved or system theme before first paint to avoid a flash.
+      try {
+        var t = localStorage.getItem("theme");
+        if (t === "dark" || (!t && matchMedia("(prefers-color-scheme: dark)").matches)) {
+          document.documentElement.classList.add("dark");
+        }
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
