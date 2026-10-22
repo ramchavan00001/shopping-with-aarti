@@ -5,7 +5,7 @@ Followers watch Aarti's try-on reels and buy every item from Amazon, Flipkart,
 Meesho and Myntra in one tap. Aarti manages everything from an admin panel.
 
 **Stack:** React 19, Vite, Tailwind CSS v4, Motion, a [Hono](https://hono.dev) API,
-PostgreSQL with [Drizzle ORM](https://orm.drizzle.team). Hosted on **Render**.
+PostgreSQL ([Neon](https://neon.tech)) with [Drizzle ORM](https://orm.drizzle.team). Hosted on **Render**.
 
 ## What's built (phase 1)
 
@@ -30,22 +30,52 @@ Behind the scenes:
 - **SEO:** `/sitemap.xml`, per-look titles/descriptions/Open Graph images.
 - **Compliance:** affiliate disclosure, `rel="sponsored"`, no copied Amazon prices.
 
-## Deploy on Render
+## Deploy (Render + Neon)
 
-1. In Render: **New → Blueprint**, connect GitHub, pick this repository.
-2. Render reads `render.yaml` and shows a **PostgreSQL database** and a **web
-   service**. Enter an `ADMIN_PASSWORD` (long and unique). Leave the R2 and webhook
-   fields empty for now.
-3. Click **Apply**. The first build takes a few minutes. When it's live, open
-   `https://<your-service>.onrender.com`, then `/admin` to log in.
+The site runs on **Render**; the database is **Neon** (serverless Postgres; the free
+plan doesn't expire).
 
-Every push to `main` redeploys automatically. Database migrations run on start.
+### 1. Create the database on Neon
 
-> **Free plan limits (Render's rules):** a free database **expires 30 days after
-> creation** and is deleted 14 days later unless upgraded, and a free web service
-> **sleeps after 15 idle minutes** (the next visitor waits about a minute). Free is
-> fine for testing; before sharing the site publicly, upgrade the database to a paid
-> plan and the web service to a paid instance in the Render dashboard.
+1. Sign up at [neon.tech](https://neon.tech) (GitHub or Google login works).
+2. **Create project**: name `shopping-with-aarti`, Postgres version as suggested,
+   region **AWS Asia Pacific (Singapore)** (or the region closest to your Render
+   service). Database name `neondb` is fine.
+3. On the project dashboard click **Connect**, keep the defaults (branch
+   `production`/`main`, database `neondb`, role `neondb_owner`, connection pooling
+   on) and copy the connection string. It looks like:
+   ```
+   postgresql://neondb_owner:npg_xxxx@ep-xxxx-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+   ```
+   Keep it secret: it contains the database password.
+
+You don't need to create tables: the app does that on start.
+
+### 2. Configure the Render web service
+
+Render dashboard → **shopping-with-aarti** → **Environment** → add:
+
+| Key | Value |
+|---|---|
+| `DATABASE_URL` | the Neon connection string |
+| `ADMIN_PASSWORD` | a long, unique password for `/admin` |
+| `SESSION_SECRET` | any long random string (use Render's **Generate** button) |
+| `SEED_DEMO` | `true` to start with the demo catalogue, `false` to start empty |
+| `NODE_VERSION` | `22` |
+
+Build command `npm ci && npm run build`, start command `npm start`, health check
+path `/api/health`. **Save, rebuild and deploy.** On start the app creates the tables
+in Neon and (with `SEED_DEMO=true`) adds the demo content.
+
+Check `https://<your-service>.onrender.com/api/health`: it should say
+`"data":"database"`. Then log in at `/admin`.
+
+Every push to `main` redeploys automatically.
+
+> **Free plan notes:** Render's free web service **sleeps after 15 idle minutes**
+> (the next visitor waits about a minute); upgrade the instance before sharing the
+> site widely. Neon's free plan pauses the database after 5 idle minutes and wakes it
+> in under a second; it includes 1 GB of storage per project, plenty for this site.
 
 **Custom domain:** Render dashboard → web service → Settings → Custom Domains
 (e.g. `shopwithaarti.in`), then add the DNS records it shows at your domain registrar.
@@ -90,9 +120,9 @@ Without R2 you paste media URLs. To upload directly from the admin panel:
 
 | Variable | Required | Purpose |
 |---|---|---|
-| `DATABASE_URL` | Yes (Render sets it from the Blueprint) | PostgreSQL connection string. Without it the site runs read-only on the demo catalogue |
+| `DATABASE_URL` | Yes | PostgreSQL connection string (Neon). Without it the site runs read-only on the demo catalogue |
 | `ADMIN_PASSWORD` | Yes, for `/admin` | Admin login password |
-| `SESSION_SECRET` | Recommended (Blueprint generates it) | Signs admin login cookies |
+| `SESSION_SECRET` | Recommended | Signs admin login cookies; without it, admins are logged out on every restart |
 | `SEED_DEMO` | No (default `true`) | Fill an empty database with demo content on first boot |
 | `MEDIA_BASE_URL` | For uploads | Public URL of the R2 bucket; relative media paths resolve against it |
 | `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` | For uploads | Cloudflare R2 credentials |

@@ -14,12 +14,33 @@ const IST = "Asia/Kolkata";
 
 const newId = (prefix: string) => `${prefix}_${crypto.randomUUID().replace(/-/g, "").slice(0, 10)}`;
 
-export function connect(url: string) {
-  const pool = new pg.Pool({
-    connectionString: url,
+/**
+ * Turn a connection string from any Postgres host (Render, Neon, local) into
+ * pool settings. Neon strings carry `sslmode=require&channel_binding=require`:
+ * node-postgres already treats `require` as full certificate verification but
+ * warns about it on every connection, so we say `verify-full` explicitly; and
+ * it ignores `channel_binding` unless asked, so we pass that through.
+ */
+export function poolConfig(url: string): pg.PoolConfig {
+  const u = new URL(url);
+  const sslmode = u.searchParams.get("sslmode");
+  if (sslmode && ["prefer", "require", "verify-ca"].includes(sslmode) && !u.searchParams.has("uselibpqcompat")) {
+    u.searchParams.set("sslmode", "verify-full");
+  }
+  const channelBinding = u.searchParams.get("channel_binding");
+  u.searchParams.delete("channel_binding");
+  return {
+    connectionString: u.toString(),
+    enableChannelBinding: channelBinding === "require",
     max: Number(process.env.DATABASE_POOL_MAX) || 5,
     idleTimeoutMillis: 30_000,
-  });
+    // Serverless databases (Neon) may need a moment to wake from idle.
+    connectionTimeoutMillis: 15_000,
+  };
+}
+
+export function connect(url: string) {
+  const pool = new pg.Pool(poolConfig(url));
   pool.on("error", (err) => console.error(JSON.stringify({ event: "db_pool_error", error: String(err) })));
   return { pool, db: drizzle(pool, { schema }) };
 }
