@@ -9,7 +9,7 @@ import { useApi } from "@/lib/api";
 import { cn, discountPct, formatPrice } from "@/lib/format";
 import { usePageMeta } from "@/lib/meta";
 import { CountdownBlocks, CountdownText, useNow } from "@/components/Countdown";
-import { WhatsAppIcon } from "@/components/icons";
+import { WhatsAppAlerts } from "@/components/WhatsAppAlerts";
 import { SectionHeading } from "@/components/SectionHeading";
 import { StoreBadge } from "@/components/StoreBadge";
 
@@ -19,7 +19,6 @@ const dateRange = (a: string, b: string) => {
 };
 
 export default function Deals() {
-  const s = useSettings();
   const { data, error } = useApi<DealsPayload>("/api/deals");
   const now = useNow();
   usePageMeta("Deals & sale calendar", "Live sales, upcoming sale dates and short-lived loot deals on fashion from Amazon, Flipkart, Meesho and Myntra.");
@@ -103,19 +102,9 @@ export default function Deals() {
         </section>
       )}
 
-      {s.whatsappChannelUrl && (
-        <section className="container-page pt-16">
-          <div className="flex flex-col items-start gap-5 rounded-[2rem] bg-[#0B3D22] px-6 py-10 text-white sm:flex-row sm:items-center sm:justify-between sm:px-10">
-            <div>
-              <h2 className="font-display text-2xl font-semibold sm:text-3xl">Never miss a loot deal</h2>
-              <p className="mt-1 text-sm text-white/75">I post price drops on WhatsApp the minute I find them. No spam, just deals.</p>
-            </div>
-            <a href={s.whatsappChannelUrl} target="_blank" rel="noopener" className="inline-flex shrink-0 items-center gap-2 rounded-full bg-[#25D366] px-5 py-3 text-sm font-bold text-[#073B1D] transition hover:brightness-105">
-              <WhatsAppIcon className="size-4" /> Join the WhatsApp channel
-            </a>
-          </div>
-        </section>
-      )}
+      <div className="container-page pt-16">
+        <WhatsAppAlerts />
+      </div>
     </div>
   );
 }
@@ -262,10 +251,14 @@ function UpcomingRow({ event }: { event: PublicSaleEvent }) {
             <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">Starts in</p>
             <p className="font-display text-xl font-semibold">{days <= 1 ? <CountdownText to={event.startsAt} /> : `${days} days`}</p>
           </div>
-          {s.whatsappChannelUrl && (
+          {s.whatsappChannelUrl ? (
             <a href={s.whatsappChannelUrl} target="_blank" rel="noopener" className="inline-flex items-center gap-1.5 rounded-full border border-line px-4 py-2.5 text-xs font-semibold transition hover:border-accent hover:text-accent">
               <BellRing className="size-3.5" /> Remind me
             </a>
+          ) : (
+            <Link to="/alerts" className="inline-flex items-center gap-1.5 rounded-full border border-line px-4 py-2.5 text-xs font-semibold transition hover:border-accent hover:text-accent">
+              <BellRing className="size-3.5" /> Remind me
+            </Link>
           )}
         </div>
       </div>

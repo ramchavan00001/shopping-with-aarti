@@ -60,6 +60,20 @@ export default function Dashboard() {
         }
       />
       {error && <ErrorBanner message={error} onRetry={reload} />}
+      {data?.ops && (data.ops.brokenLinks > 0 || data.ops.recentErrors > 0) && (
+        <div className="mb-5 flex flex-wrap gap-3">
+          {data.ops.brokenLinks > 0 && (
+            <Link to="/admin/links" className="flex items-center gap-2 rounded-2xl border border-red-300 bg-red-50 px-4 py-3 text-sm font-semibold text-red-800 dark:border-red-900 dark:bg-red-950/40 dark:text-red-200">
+              {data.ops.brokenLinks} broken affiliate link{data.ops.brokenLinks > 1 ? "s" : ""}: fix now <ArrowRight className="size-4" />
+            </Link>
+          )}
+          {data.ops.recentErrors > 0 && (
+            <Link to="/admin/system" className="flex items-center gap-2 rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+              {data.ops.recentErrors} error{data.ops.recentErrors > 1 ? "s" : ""} in the last 24 hours <ArrowRight className="size-4" />
+            </Link>
+          )}
+        </div>
+      )}
       {data && (
         <div className="space-y-5">
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">

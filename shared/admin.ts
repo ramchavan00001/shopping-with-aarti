@@ -139,6 +139,86 @@ export interface DemoContent {
   deals: { id: string; title: string }[];
 }
 
+/* ------------------------------------------------------------ operations -- */
+
+export type LinkStatus = "ok" | "broken" | "blocked" | "error";
+
+export interface LinkCheckRow {
+  targetId: string;
+  kind: "product" | "event" | "deal";
+  /** What the link belongs to, e.g. product title, with its reel code. */
+  label: string;
+  reelCode: string | null;
+  url: string;
+  status: LinkStatus | "unchecked";
+  httpStatus: number | null;
+  finalUrl: string | null;
+  detail: string | null;
+  checkedAt: string | null;
+}
+
+export interface JobState {
+  name: string;
+  lastStartedAt: string | null;
+  lastFinishedAt: string | null;
+  lastStatus: "ok" | "failed" | "running" | null;
+  lastSummary: string | null;
+}
+
+export interface LinkHealth {
+  counts: Record<LinkStatus | "unchecked", number>;
+  links: LinkCheckRow[];
+  job: JobState | null;
+}
+
+export interface ErrorRow {
+  id: number;
+  origin: "server" | "client" | "job";
+  message: string;
+  detail: string | null;
+  path: string | null;
+  count: number;
+  firstSeen: string;
+  lastSeen: string;
+}
+
+export interface SystemStatus {
+  database: boolean;
+  alerts: { telegram: boolean; webhook: boolean };
+  uploads: boolean;
+  jobs: JobState[];
+  errors: ErrorRow[];
+}
+
+export interface SubscriberRow {
+  id: number;
+  name: string;
+  phone: string;
+  interests: string[];
+  source: string;
+  createdAt: string;
+}
+
+export interface InstagramStatus {
+  connected: boolean;
+  username: string | null;
+  tokenRefreshedAt: string | null;
+  autoImport: boolean;
+  lastSyncAt: string | null;
+  job: JobState | null;
+}
+
+export interface InstagramMedia {
+  id: string;
+  caption: string;
+  mediaType: string;
+  permalink: string;
+  thumbnailUrl: string | null;
+  timestamp: string;
+  /** Reel code if already imported. */
+  importedAs: string | null;
+}
+
 export const enquiryStatuses = ["new", "replied", "archived"] as const;
 export type EnquiryStatus = (typeof enquiryStatuses)[number];
 
@@ -187,6 +267,8 @@ export interface AdminStats {
   topProducts: { id: string; title: string; store: string; reelCode: string; image: string; clicks: number }[];
   reelPerformance: { code: string; title: string; poster: string; plays: number; lookViews: number; clicks: number }[];
   recentEnquiries: AdminEnquiry[];
+  /** Broken links, WhatsApp subscribers and errors in the last 24 h. */
+  ops?: { brokenLinks: number; subscribers: number; recentErrors: number };
 }
 
 export interface AdminConfig {

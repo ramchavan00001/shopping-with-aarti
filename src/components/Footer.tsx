@@ -20,10 +20,14 @@ export function Footer() {
             <a href={s.instagramUrl} target="_blank" rel="noopener" aria-label="Instagram" className="grid size-10 place-items-center rounded-full border border-line transition hover:border-accent hover:text-accent">
               <InstagramIcon className="size-4" />
             </a>
-            {s.whatsappChannelUrl && (
+            {s.whatsappChannelUrl ? (
               <a href={s.whatsappChannelUrl} target="_blank" rel="noopener" aria-label="WhatsApp channel" className="grid size-10 place-items-center rounded-full border border-line transition hover:border-accent hover:text-accent">
                 <WhatsAppIcon className="size-4" />
               </a>
+            ) : (
+              <Link to="/alerts" aria-label="WhatsApp deal alerts" className="grid size-10 place-items-center rounded-full border border-line transition hover:border-accent hover:text-accent">
+                <WhatsAppIcon className="size-4" />
+              </Link>
             )}
             {s.email && (
               <a href={`mailto:${s.email}`} aria-label="Email" className="grid size-10 place-items-center rounded-full border border-line transition hover:border-accent hover:text-accent">
@@ -40,6 +44,7 @@ export function Footer() {
             <li><Link className="hover:text-accent" to="/category/dresses">Dresses</Link></li>
             <li><Link className="hover:text-accent" to="/category/sarees">Sarees</Link></li>
             <li><Link className="hover:text-accent" to="/deals">Deals & sale calendar</Link></li>
+            <li><Link className="hover:text-accent" to="/alerts">WhatsApp deal alerts</Link></li>
           </ul>
         </div>
         <div>

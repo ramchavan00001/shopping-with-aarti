@@ -60,5 +60,8 @@ export function sourceFromUserAgent(ua: string | null | undefined): TrafficSourc
   return undefined;
 }
 
+/** Harmless browser errors not worth logging (extensions, layout warnings, flaky networks). */
+export const ignoredClientErrors = [/ResizeObserver loop/i, /^Script error\.?$/i, /extension:\/\//i, /Non-Error promise rejection/i, /AbortError/i, /Load failed/i, /Failed to fetch/i];
+
 export const isBot = (ua: string | null | undefined) =>
   !ua || /bot|crawler|spider|preview|facebookexternalhit|whatsapp\/|slurp|headless|lighthouse/i.test(ua);

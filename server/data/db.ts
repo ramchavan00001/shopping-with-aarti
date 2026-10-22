@@ -7,6 +7,7 @@ import { lootDeals as demoDeals, reels as demoReels, saleEvents as demoEvents } 
 import { mergeSettings, type SiteSettings } from "../../shared/settings";
 import type { Category, Colour, LootDeal, Occasion, Product, Reel, SaleEvent, StoreId } from "../../shared/types";
 import { AdminError, type AdminStore } from "./admin";
+import { createOps } from "../ops";
 import type { Catalog, DataSource } from "./types";
 
 export type Db = NodePgDatabase<typeof schema>;
@@ -514,6 +515,7 @@ export function createDbSource(db: Db): DataSource {
 
   return {
     kind: "database",
+    ops: createOps(db, admin),
     catalog,
     async recordClick(click) {
       await db.insert(schema.clicks).values({

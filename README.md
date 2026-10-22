@@ -28,8 +28,61 @@ Behind the scenes:
   URLs never reach the browser. Link-preview bots are ignored.
 - **Database:** PostgreSQL. Migrations run automatically on start; an empty
   database is filled with the demo catalogue on first boot (`SEED_DEMO`).
-- **SEO:** `/sitemap.xml`, per-look titles/descriptions/Open Graph images.
+- **SEO:** `/sitemap.xml`, `/robots.txt`, per-look titles/descriptions, and generated
+  share images (`/og/site.png`, `/og/look/a113.png`) for WhatsApp/Instagram/Google previews.
 - **Compliance:** affiliate disclosure, `rel="sponsored"`, no copied Amazon prices.
+
+## Phase 2: monitoring, alerts and automation
+
+| Feature | Where | What it does |
+|---|---|---|
+| Broken-link checker | Admin → Link health | Checks every buy, deal and sale link daily. 404/410 = broken (alert sent); 403/503 from big stores = "store blocked check" (open it yourself) |
+| WhatsApp deal alerts | `/alerts`, Deals page, Admin → WhatsApp alerts | Join-the-channel button plus a sign-up form (name, number, interests, consent). Export as CSV or message from the admin |
+| Share images + Search Console | `/og/*`, `GOOGLE_SITE_VERIFICATION` | Branded 1200×630 preview cards per look; Google verification tag |
+| Error alerts + uptime | Admin → System | Server and browser errors are grouped and listed; Telegram (or webhook) alerts at most once an hour per problem; background jobs with "Run now" |
+| Instagram auto-sync | Admin → Instagram sync | New reels are copied (video + cover into R2) as hidden drafts every 6 hours; add products, then publish |
+
+Background jobs run inside the web service every 10 minutes (link check daily,
+Instagram every 6 hours). On Render's free plan the service sleeps when idle, so set
+up UptimeRobot (below) to keep it awake, or call `/api/cron?key=<CRON_SECRET>` from
+any scheduler.
+
+### Phone alerts (Telegram)
+
+1. In Telegram, open **@BotFather**, send `/newbot`, pick a name, copy the **bot token**.
+2. Open your new bot and send it any message.
+3. Open `https://api.telegram.org/bot<TOKEN>/getUpdates` and copy the number after `"chat":{"id":`.
+4. Render → Environment: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`. Redeploy, then
+   Admin → System → **Send test alert**.
+
+(Alternatively `ALERT_WEBHOOK_URL`: a Discord/Slack-style webhook receiving `{content, text}`.)
+
+### Uptime monitoring (UptimeRobot, free)
+
+[uptimerobot.com](https://uptimerobot.com) → **New monitor** → HTTP(s) →
+`https://shopping-with-aarti.onrender.com/api/health` → every 5 minutes.
+
+### Google Search Console
+
+1. [search.google.com/search-console](https://search.google.com/search-console) →
+   **Add property** → **URL prefix** → the site URL.
+2. Choose **HTML tag**, copy only the `content="…"` value into Render as
+   `GOOGLE_SITE_VERIFICATION`, redeploy, then click **Verify**.
+3. **Sitemaps** → submit `sitemap.xml`.
+
+### Instagram auto-sync
+
+Needs R2 uploads (above). Instagram's API requires a Meta app:
+
+1. Aarti's Instagram must be a **Professional** (Creator or Business) account.
+2. [developers.facebook.com](https://developers.facebook.com) → **Create app** → use case
+   **Manage messaging & content on Instagram** → **API setup with Instagram login**.
+3. Under **Generate access tokens**, add the Instagram account and generate a token
+   (`instagram_business_basic` permission).
+4. Paste it in Admin → Instagram sync → **Connect**. The token renews itself weekly.
+
+The first sync only marks the starting point; reels posted after that are imported.
+Older reels can be imported one by one from the grid on that page.
 
 ## Deploy (Render + Neon)
 
@@ -169,6 +222,11 @@ automatically (a frame from the video).
 | `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` | For uploads | Cloudflare R2 credentials |
 | `R2_JURISDICTION` | No | Only if the bucket was created in a jurisdiction (`eu` or `fedramp`) |
 | `ENQUIRY_WEBHOOK_URL` | No | Also POST brand enquiries as JSON to this URL |
+| `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | Recommended | Error, job and broken-link alerts to Telegram |
+| `ALERT_WEBHOOK_URL` | No | Same alerts as JSON to a webhook |
+| `GOOGLE_SITE_VERIFICATION` | No | Google Search Console HTML-tag value |
+| `SITE_URL` | No | Public address (e.g. a custom domain) for share links and the sitemap; defaults to Render's URL |
+| `CRON_SECRET` | No | Enables `/api/cron?key=…` to run due background jobs from an outside scheduler |
 | `PORT` | No | Render sets it |
 
 Defaults for site settings live in `shared/settings.ts`; values saved in
@@ -208,6 +266,8 @@ server/
   db/            Drizzle schema, migrations runner, demo seeding
   auth.ts        admin session cookie, CSRF and login rate limiting
   uploads.ts     signed direct-to-R2 upload URLs
+  ops/           background jobs, link checker, alerts, error log, subscribers, Instagram sync
+  og.ts          share-image generation (satori + resvg)
   node.ts        Render / Node entry
   worker.ts      Cloudflare Workers entry (read-only preview, no database)
 drizzle/         SQL migrations (committed)
@@ -221,6 +281,6 @@ catalogue. The database and admin panel only run on the Render (Node) deployment
 
 ## Roadmap
 
-- **Phase 2:** broken-link checker, Instagram auto-sync, WhatsApp channel signup,
-  editable site settings (stats, links) in the admin panel, deeper analytics.
+- **Phase 2 (done):** analytics, site settings, broken-link checker, WhatsApp alerts,
+  share images, error alerts, Instagram auto-sync.
 - **Phase 3:** shopper login to sync saved items across devices, price-drop alerts, PWA.

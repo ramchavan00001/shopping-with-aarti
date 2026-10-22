@@ -22,6 +22,13 @@
       "when": 1792692830218,
       "tag": "0002_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792694565190,
+      "tag": "0003_phase2_ops",
+      "breakpoints": true
     }
   ]
 }

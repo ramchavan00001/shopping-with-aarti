@@ -1,6 +1,7 @@
 import type { Category, LootDeal, Product, Reel, SaleEvent, StoreId } from "../../shared/types";
 import type { Enquiry } from "../../shared/enquiry";
 import type { AdminStore } from "./admin";
+import type { Ops } from "../ops";
 import type { EventKind, TrafficSource } from "../../shared/analytics";
 import type { SiteSettings } from "../../shared/settings";
 
@@ -46,4 +47,6 @@ export interface DataSource {
   saveEnquiry(enquiry: Omit<Enquiry, "website">): Promise<void>;
   /** Only the database source can be edited from the admin panel. */
   admin?: AdminStore;
+  /** Background jobs, error log, subscribers (database source on Node only). */
+  ops?: Ops;
 }

@@ -23,6 +23,10 @@ export default function Privacy() {
             We do not store IP addresses.
           </li>
           <li>
+            <b>WhatsApp deal alerts.</b> If you sign up, we keep your name, WhatsApp number and the topics you chose, only to send
+            you deal messages. Reply STOP or contact us to be removed, and we'll delete your number.
+          </li>
+          <li>
             <b>Brand enquiries.</b> If you use the collaboration form, we keep the name, brand, email, phone number (optional) and
             message you send, so we can reply.
           </li>
@@ -52,7 +56,7 @@ export default function Privacy() {
         <h2>Services we use</h2>
         <ul>
           <li><b>Render</b> hosts the website.</li>
-          <li><b>Neon</b> hosts the database (statistics and enquiries).</li>
+          <li><b>Neon</b> hosts the database (statistics, enquiries and alert sign-ups).</li>
           <li><b>Cloudflare</b> stores and serves videos and photos.</li>
         </ul>
         <p>These providers process data only to run the site for us.</p>
@@ -62,6 +66,7 @@ export default function Privacy() {
         <h2>How long we keep data</h2>
         <p>
           Enquiries are kept until the conversation is finished and then deleted on request or during regular clean-ups.
+          WhatsApp alert numbers are kept until you unsubscribe.
           Anonymous statistics are kept to understand which content is useful and contain nothing that identifies you.
         </p>
       </section>

@@ -15,6 +15,9 @@ import { AdminError, type AdminStore } from "./data/admin";
 import type { SourceResolver } from "./app";
 import { adminConfigured, endSession, hasSession, loginRateLimited, passwordMatches, requireAdmin, sameOriginWrites, startSession } from "./auth";
 import { signUpload, uploadsEnabled } from "./uploads";
+import { sendAlert } from "./ops/alerts";
+import { LINK_JOB } from "./ops/links";
+import { IG_JOB } from "./ops/instagram";
 
 export function createAdminApi(getSource: SourceResolver) {
   const api = new Hono();
@@ -29,6 +32,7 @@ export function createAdminApi(getSource: SourceResolver) {
   api.onError((err, c) => {
     if (err instanceof AdminError) return c.json({ error: err.message, field: err.field }, err.status);
     console.error(JSON.stringify({ event: "admin_request_failed", path: c.req.path, error: String(err), stack: err.stack }));
+    void getSource(c).ops?.errors.record("server", err.message || String(err), err.stack, c.req.path);
     return c.json({ error: "Something went wrong. Please try again." }, 500);
   });
 
@@ -86,7 +90,16 @@ export function createAdminApi(getSource: SourceResolver) {
 
   api.get("/stats", async (c) => {
     const days = Math.min(90, Math.max(1, Number(c.req.query("days")) || 30));
-    return c.json(await store(c).stats(days));
+    const stats = await store(c).stats(days);
+    const o = getSource(c).ops;
+    const opsSummary = o
+      ? await Promise.all([o.links.brokenCount(), o.subscribers.count(), o.errors.list(20)]).then(([brokenLinks, subscribers, errs]) => ({
+          brokenLinks,
+          subscribers,
+          recentErrors: errs.filter((e) => Date.now() - Date.parse(e.lastSeen) < 86_400_000).length,
+        }))
+      : undefined;
+    return c.json({ ...stats, ops: opsSummary });
   });
 
   // Reels
@@ -151,6 +164,71 @@ export function createAdminApi(getSource: SourceResolver) {
   api.delete("/deals/:id", async (c) => {
     await store(c).deleteDeal(c.req.param("id"));
     return c.json({ ok: true });
+  });
+
+  /* ---------------------------------------------------------- operations -- */
+
+  const ops = (c: Context) => {
+    const o = getSource(c).ops;
+    if (!o) throw new AdminError("This needs the database. Set DATABASE_URL on the server.", 400);
+    return o;
+  };
+
+  // Broken-link checker
+  api.get("/links", async (c) => c.json(await ops(c).links.health()));
+  api.post("/links/check", async (c) => {
+    ops(c).jobs.start(LINK_JOB);
+    return c.json({ started: true });
+  });
+  api.post("/links/:id/check", async (c) => {
+    const r = await ops(c).links.checkOne(c.req.param("id"));
+    return r ? c.json(r) : c.json({ error: "Link not found" }, 404);
+  });
+
+  // System health: alerts, jobs, errors
+  api.get("/system", async (c) => c.json(await ops(c).system()));
+  api.post("/system/test-alert", async (c) => {
+    const sent = await sendAlert("Test alert from Shopping with Aarti", "If you can read this, alerts work. 🎉", `test:${Date.now()}`);
+    return sent ? c.json({ ok: true }) : c.json({ error: "No alert channel set up yet. Add TELEGRAM_BOT_TOKEN and TELEGRAM_CHAT_ID (or ALERT_WEBHOOK_URL) on Render." }, 400);
+  });
+  api.delete("/system/errors", async (c) => {
+    await ops(c).errors.clear();
+    return c.json({ ok: true });
+  });
+  api.delete("/system/errors/:id", async (c) => {
+    await ops(c).errors.clear(Number(c.req.param("id")));
+    return c.json({ ok: true });
+  });
+
+  // WhatsApp alert subscribers
+  api.get("/subscribers", async (c) => c.json({ subscribers: await ops(c).subscribers.list() }));
+  api.delete("/subscribers/:id", async (c) => {
+    await ops(c).subscribers.remove(Number(c.req.param("id")));
+    return c.json({ ok: true });
+  });
+
+  // Instagram auto-sync
+  api.get("/instagram", async (c) => c.json(await ops(c).instagram.status()));
+  api.put("/instagram/token", async (c) => {
+    const { token } = (await c.req.json().catch(() => ({}))) as { token?: string };
+    if (!token || token.trim().length < 20) return c.json({ error: "Paste the full access token", field: "token" }, 422);
+    await ops(c).instagram.connect(token);
+    return c.json(await ops(c).instagram.status());
+  });
+  api.delete("/instagram", async (c) => {
+    await ops(c).instagram.disconnect();
+    return c.json({ ok: true });
+  });
+  api.put("/instagram/auto-import", async (c) => {
+    const { on } = (await c.req.json().catch(() => ({}))) as { on?: boolean };
+    await ops(c).instagram.setAutoImport(on !== false);
+    return c.json({ ok: true });
+  });
+  api.get("/instagram/media", async (c) => c.json({ media: await ops(c).instagram.media() }));
+  api.post("/instagram/import/:id", async (c) => c.json({ code: await ops(c).instagram.importOne(c.req.param("id")) }));
+  api.post("/instagram/sync", async (c) => {
+    const state = await ops(c).jobs.run(IG_JOB);
+    return c.json({ job: state });
   });
 
   // Site settings

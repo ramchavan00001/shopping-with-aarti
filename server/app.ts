@@ -4,8 +4,10 @@ import { cors } from "hono/cors";
 import { createRepo, media, type Repo } from "./repo";
 import { mergeSettings, photoFields } from "../shared/settings";
 import { createAdminApi } from "./admin-api";
+import { publicOrigin } from "./origin";
 import { requestSource, shouldRecord, trackRateLimited, visitorHash } from "./analytics";
-import { eventKinds, type EventKind } from "../shared/analytics";
+import { eventKinds, ignoredClientErrors, isBot, type EventKind } from "../shared/analytics";
+import { validateSubscribe } from "../shared/subscribe";
 import type { Catalog, DataSource } from "./data/types";
 import { stores } from "../shared/stores";
 import { categoryPath, lookPath } from "../shared/paths";
@@ -62,6 +64,8 @@ export function createApp(getSource: SourceResolver) {
 
   app.onError((err, c) => {
     console.error(JSON.stringify({ event: "request_failed", path: c.req.path, error: String(err), stack: err.stack }));
+    const ops = getSource(c).ops;
+    if (ops) background(c, ops.errors.record("server", err.message || String(err), err.stack, c.req.path));
     return c.json({ error: "Something went wrong. Please try again." }, 500);
   });
 
@@ -196,6 +200,42 @@ export function createApp(getSource: SourceResolver) {
     return c.json({ ok: true });
   });
 
+  // WhatsApp deal-alert sign-up.
+  app.post("/api/subscribe", async (c) => {
+    const ops = getSource(c).ops;
+    if (!ops) return c.json({ error: "Sign-ups aren't available right now." }, 503);
+    const body = (await c.req.json().catch(() => null)) as Record<string, unknown> | null;
+    if (!body) return c.json({ error: "Invalid request" }, 400);
+    const { data, errors } = validateSubscribe(body);
+    if (!data) return c.json({ error: "Please fix the highlighted fields.", errors }, 422);
+    if (data.website) return c.json({ ok: true }); // honeypot
+    await ops.subscribers.add({ name: data.name, phone: data.phone, interests: data.interests, source: requestSource(c, typeof body.src === "string" ? body.src : null) });
+    return c.json({ ok: true });
+  });
+
+  // Browser errors (sent by src/lib/errors.ts). Always 204.
+  app.post("/api/client-errors", async (c) => {
+    const ops = getSource(c).ops;
+    if (!ops || trackRateLimited(c)) return c.body(null, 204);
+    const b = (await c.req.text().then((t) => JSON.parse(t)).catch(() => null)) as Record<string, unknown> | null;
+    const message = typeof b?.message === "string" ? b.message : "";
+    const stack = typeof b?.stack === "string" ? b.stack : "";
+    if (!message || isBot(c.req.header("user-agent")) || ignoredClientErrors.some((r) => r.test(message) || r.test(stack))) return c.body(null, 204);
+    const detail = [typeof b?.stack === "string" ? b.stack : "", `Browser: ${c.req.header("user-agent") ?? "?"}`].filter(Boolean).join("\n");
+    background(c, ops.errors.record("client", message, detail, typeof b?.path === "string" ? b.path : undefined));
+    return c.body(null, 204);
+  });
+
+  // Optional: an outside scheduler (e.g. cron-job.org) can run due jobs:
+  // GET /api/cron?key=<CRON_SECRET>
+  app.get("/api/cron", async (c) => {
+    const secret = env<{ CRON_SECRET?: string }>(c).CRON_SECRET;
+    const ops = getSource(c).ops;
+    if (!secret || c.req.query("key") !== secret || !ops) return c.json({ error: "Not found" }, 404);
+    await ops.jobs.tick();
+    return c.json({ ok: true, jobs: await ops.jobs.all() });
+  });
+
   // Tracked outbound link: record the click, then send the shopper to the store.
   // The browser adds ?src=<traffic source> (see src/lib/track.ts).
   app.get("/go/:id", async (c) => {
@@ -252,7 +292,7 @@ export function createApp(getSource: SourceResolver) {
 
   app.get("/sitemap.xml", async (c) => {
     const repo = await repoFor(c);
-    const origin = new URL(c.req.url).origin;
+    const origin = publicOrigin(c.req.raw, env<{ SITE_URL?: string }>(c).SITE_URL);
     const urls = [
       { loc: "/", priority: "1.0" },
       { loc: "/reels", priority: "0.9" },
@@ -269,6 +309,12 @@ export function createApp(getSource: SourceResolver) {
     c.header("Content-Type", "application/xml; charset=utf-8");
     c.header("Cache-Control", "public, max-age=3600");
     return c.body(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`);
+  });
+
+  app.get("/robots.txt", (c) => {
+    const origin = publicOrigin(c.req.raw, env<{ SITE_URL?: string }>(c).SITE_URL);
+    c.header("Cache-Control", "public, max-age=3600");
+    return c.text(`User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /go/\nDisallow: /api/\n\nSitemap: ${origin}/sitemap.xml\n`);
   });
 
   app.route("/api/admin", createAdminApi(getSource));

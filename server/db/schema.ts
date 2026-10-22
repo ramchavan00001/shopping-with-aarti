@@ -28,6 +28,8 @@ export const reels = pgTable(
     isFeatured: boolean("is_featured").notNull().default(false),
     isPublished: boolean("is_published").notNull().default(true),
     views: integer("views").notNull().default(0),
+    /** Instagram media id when imported by Instagram auto-sync. */
+    instagramMediaId: text("instagram_media_id"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -145,4 +147,61 @@ export const settings = pgTable("settings", {
   key: text("key").primaryKey(),
   value: jsonb("value").notNull(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Latest result of the broken-link checker, one row per checked link. */
+export const linkChecks = pgTable("link_checks", {
+  /** product, sale event or loot deal id */
+  targetId: text("target_id").primaryKey(),
+  kind: text("kind").notNull(),
+  url: text("url").notNull(),
+  /** ok | broken | blocked | error */
+  status: text("status").notNull(),
+  httpStatus: integer("http_status"),
+  finalUrl: text("final_url"),
+  detail: text("detail"),
+  checkedAt: timestamp("checked_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** People who asked for deal alerts on WhatsApp. */
+export const subscribers = pgTable(
+  "subscribers",
+  {
+    id: serial("id").primaryKey(),
+    name: text("name").notNull(),
+    /** Digits only, with country code (e.g. 919876543210). */
+    phone: text("phone").notNull().unique(),
+    interests: text("interests").array().notNull().default(sql`'{}'::text[]`),
+    source: text("source").notNull().default("direct"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("subscribers_created_at_idx").on(t.createdAt)],
+);
+
+/** Server and browser errors, grouped by fingerprint. */
+export const errorLog = pgTable(
+  "error_log",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    /** server | client | job */
+    origin: text("origin").notNull(),
+    fingerprint: text("fingerprint").notNull(),
+    message: text("message").notNull(),
+    detail: text("detail"),
+    path: text("path"),
+    count: integer("count").notNull().default(1),
+    firstSeen: timestamp("first_seen", { withTimezone: true }).notNull().defaultNow(),
+    lastSeen: timestamp("last_seen", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("error_log_fingerprint_idx").on(t.fingerprint), index("error_log_last_seen_idx").on(t.lastSeen)],
+);
+
+/** Background job bookkeeping (link checks, Instagram sync). */
+export const jobRuns = pgTable("job_runs", {
+  name: text("name").primaryKey(),
+  lastStartedAt: timestamp("last_started_at", { withTimezone: true }),
+  lastFinishedAt: timestamp("last_finished_at", { withTimezone: true }),
+  /** ok | failed | running */
+  lastStatus: text("last_status"),
+  lastSummary: text("last_summary"),
 });

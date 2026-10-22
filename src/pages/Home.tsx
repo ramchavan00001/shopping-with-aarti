@@ -471,16 +471,12 @@ function About() {
             >
               <InstagramIcon className="size-4" /> Follow on Instagram
             </a>
-            {s.whatsappChannelUrl && (
-              <a
-                href={s.whatsappChannelUrl}
-                target="_blank"
-                rel="noopener"
-                className="inline-flex items-center gap-2 rounded-full bg-[#25D366] px-5 py-3 text-sm font-semibold text-[#073B1D] shadow-soft transition hover:brightness-105"
-              >
-                <WhatsAppIcon className="size-4" /> Get loot deals on WhatsApp
-              </a>
-            )}
+            <Link
+              to="/alerts"
+              className="inline-flex items-center gap-2 rounded-full bg-[#25D366] px-5 py-3 text-sm font-semibold text-[#073B1D] shadow-soft transition hover:brightness-105"
+            >
+              <WhatsAppIcon className="size-4" /> Get loot deals on WhatsApp
+            </Link>
             <Link
               to="/about"
               className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-5 py-3 text-sm font-semibold transition hover:border-accent hover:text-accent"
