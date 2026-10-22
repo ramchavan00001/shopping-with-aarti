@@ -19,6 +19,8 @@
   --gold: #c9a46a;
   --blush: #f3dcd8;
   --shadow: 31 26 23;
+  /* Chart marks (validated with the dataviz palette checker for each mode). */
+  --chart: #8e2c48;
 }
 
 .dark {
@@ -34,6 +36,7 @@
   --gold: #e3c181;
   --blush: #3b2a2c;
   --shadow: 0 0 0;
+  --chart: #d0607f;
 }
 
 @theme inline {
@@ -48,6 +51,7 @@
   --color-accent-soft: var(--accent-soft);
   --color-gold: var(--gold);
   --color-blush: var(--blush);
+  --color-chart: var(--chart);
   --font-display: "Fraunces Variable", Georgia, serif;
   --font-sans: "Inter Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
   --shadow-soft: 0 1px 2px rgb(var(--shadow) / 0.04), 0 8px 24px -8px rgb(var(--shadow) / 0.12);

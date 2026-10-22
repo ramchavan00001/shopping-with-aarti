@@ -1,16 +1,55 @@
-# Render Blueprint: Node web service serving the built SPA and the Hono API.
+# Render Blueprint: one PostgreSQL database + one Node web service.
+# Dashboard → New → Blueprint → pick this repo. Render asks for the values
+# marked `sync: false` (ADMIN_PASSWORD at minimum).
+#
+# Free plans are fine for testing, but note Render's limits: a free database
+# expires 30 days after creation (deleted 14 days later unless upgraded), and
+# a free web service sleeps after 15 idle minutes (~1 minute to wake). Change
+# `plan` below (or in the dashboard) before going live.
+
+databases:
+  - name: shopping-with-aarti-db
+    plan: free
+    region: singapore # closest Render region to India; must match the web service
+    databaseName: aarti
+    user: aarti
+
 services:
   - type: web
     name: shopping-with-aarti
     runtime: node
     plan: free
+    region: singapore
     buildCommand: npm ci && npm run build
     startCommand: npm start
     healthCheckPath: /api/health
     envVars:
       - key: NODE_VERSION
         value: "22"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: shopping-with-aarti-db
+          property: connectionString
+      # Password for /admin. Use a long, unique one.
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: SESSION_SECRET
+        generateValue: true
+      # First boot fills an empty database with the demo catalogue. Set to
+      # "false" before the first deploy to start empty instead.
+      - key: SEED_DEMO
+        value: "true"
+      # Optional: Cloudflare R2 for uploading videos/photos from /admin.
       - key: MEDIA_BASE_URL
-        value: ""
+        sync: false
+      - key: R2_ACCOUNT_ID
+        sync: false
+      - key: R2_ACCESS_KEY_ID
+        sync: false
+      - key: R2_SECRET_ACCESS_KEY
+        sync: false
+      - key: R2_BUCKET
+        sync: false
+      # Optional: also forward brand enquiries to a webhook.
       - key: ENQUIRY_WEBHOOK_URL
         sync: false

@@ -1,6 +1,6 @@
 import { site } from "../shared/site";
 import { lookPath, codeFromLookSlug } from "../shared/paths";
-import { getReel } from "./repo";
+import type { Repo } from "./repo";
 
 // Server-side meta tags for look pages, so links shared on WhatsApp,
 // Instagram and Google show the reel's title and poster instead of the
@@ -9,9 +9,9 @@ import { getReel } from "./repo";
 const esc = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
-export function renderLookHtml(indexHtml: string, url: URL, mediaBaseUrl?: string): { html: string; status: number } {
+export function renderLookHtml(indexHtml: string, url: URL, repo: Repo, mediaBaseUrl?: string): { html: string; status: number } {
   const slug = url.pathname.replace(/^\/look\//, "").replace(/\/$/, "");
-  const reel = getReel(codeFromLookSlug(slug), { mediaBaseUrl });
+  const reel = repo.getReel(codeFromLookSlug(slug), { mediaBaseUrl });
   if (!reel) return { html: indexHtml, status: 404 };
 
   const title = `${reel.title} · Shop the look #${reel.code} | ${site.name}`;

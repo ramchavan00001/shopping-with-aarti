@@ -24,6 +24,7 @@ export interface Category {
   name: string;
   image: string;
   blurb: string;
+  sortOrder?: number;
 }
 
 export interface Product {
@@ -65,6 +66,8 @@ export interface Reel {
   tags: string[];
   publishedAt: string;
   isFeatured?: boolean;
+  /** Hidden reels stay in the admin panel but not on the site. */
+  isPublished?: boolean;
   /** Seed popularity until click tracking is wired to a database. */
   views: number;
 }

@@ -14,7 +14,7 @@ function honoDevServer() {
         const url = req.url ?? "";
         if (!url.startsWith("/api/") && !url.startsWith("/go/") && url !== "/sitemap.xml") return next();
         try {
-          const { default: app } = await server.ssrLoadModule("/server/app.ts");
+          const { default: app } = await server.ssrLoadModule("/server/dev.ts");
           await getRequestListener((request) => app.fetch(request, process.env))(req, res);
         } catch (err) {
           next(err);

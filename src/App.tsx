@@ -12,6 +12,7 @@ const Look = lazy(() => import("./pages/Look"));
 const Category = lazy(() => import("./pages/Category"));
 const Deals = lazy(() => import("./pages/Deals"));
 const About = lazy(() => import("./pages/About"));
+const AdminApp = lazy(() => import("./admin/AdminApp"));
 
 function ScrollManager() {
   const { pathname, hash } = useLocation();
@@ -54,6 +55,14 @@ export default function App() {
           element={
             <Suspense fallback={<div className="fixed inset-0 bg-neutral-950" />}>
               <Reels />
+            </Suspense>
+          }
+        />
+        <Route
+          path="/admin/*"
+          element={
+            <Suspense fallback={<div className="min-h-dvh bg-bg" />}>
+              <AdminApp />
             </Suspense>
           }
         />
