@@ -11,15 +11,15 @@ function niceMax(v: number) {
 }
 
 /**
- * Single-series column chart of clicks per day. Columns are capped at 24px with
+ * Single-series column chart of a daily count. Columns are capped at 24px with
  * a 4px rounded top; hover (or focus) shows the exact day and count; the peak
  * day carries the only direct label.
  */
-export function ClickChart({ data }: { data: { day: string; clicks: number }[] }) {
+export function DailyChart({ data, unit }: { data: { day: string; value: number }[]; unit: string }) {
   const [hover, setHover] = useState<number | null>(null);
   const H = 180;
-  const max = niceMax(Math.max(0, ...data.map((d) => d.clicks)));
-  const peak = data.reduce((best, d, i) => (d.clicks > (data[best]?.clicks ?? -1) ? i : best), 0);
+  const max = niceMax(Math.max(0, ...data.map((d) => d.value)));
+  const peak = data.reduce((best, d, i) => (d.value > (data[best]?.value ?? -1) ? i : best), 0);
   const ticks = [0, max / 2, max];
   const labelEvery = Math.ceil(data.length / 7);
 
@@ -41,7 +41,7 @@ export function ClickChart({ data }: { data: { day: string; clicks: number }[] }
           ))}
           <div className="relative flex items-end gap-0.5" style={{ height: H }} onMouseLeave={() => setHover(null)}>
             {data.map((d, i) => {
-              const h = d.clicks ? Math.max(3, (d.clicks / max) * H) : 0;
+              const h = d.value ? Math.max(3, (d.value / max) * H) : 0;
               return (
                 <button
                   key={d.day}
@@ -49,16 +49,16 @@ export function ClickChart({ data }: { data: { day: string; clicks: number }[] }
                   onMouseEnter={() => setHover(i)}
                   onFocus={() => setHover(i)}
                   onBlur={() => setHover(null)}
-                  aria-label={`${dayLabel(d.day, { day: "numeric", month: "short" })}: ${d.clicks} clicks`}
+                  aria-label={`${dayLabel(d.day, { day: "numeric", month: "short" })}: ${d.value} ${unit}`}
                   className="group relative flex h-full flex-1 items-end justify-center outline-none"
                 >
                   <span
                     className="w-full max-w-6 rounded-t-[4px] bg-chart transition-opacity"
                     style={{ height: h, opacity: hover === null || hover === i ? 1 : 0.45 }}
                   />
-                  {i === peak && d.clicks > 0 && hover === null && (
+                  {i === peak && d.value > 0 && hover === null && (
                     <span className="absolute text-[11px] font-semibold tabular-nums text-ink" style={{ bottom: h + 4 }}>
-                      {d.clicks}
+                      {d.value}
                     </span>
                   )}
                 </button>
@@ -71,7 +71,7 @@ export function ClickChart({ data }: { data: { day: string; clicks: number }[] }
               style={{ left: `${((hover + 0.5) / data.length) * 100}%`, top: -8 }}
             >
               <span className="block text-muted">{dayLabel(data[hover].day, { weekday: "short", day: "numeric", month: "short" })}</span>
-              <span className="font-semibold tabular-nums text-ink">{data[hover].clicks} clicks</span>
+              <span className="font-semibold tabular-nums text-ink">{data[hover].value} {unit}</span>
             </div>
           )}
           {/* x axis */}
@@ -88,13 +88,13 @@ export function ClickChart({ data }: { data: { day: string; clicks: number }[] }
         <summary className="cursor-pointer text-muted hover:text-ink">View as table</summary>
         <table className="mt-2 w-full max-w-xs text-left tabular-nums">
           <thead>
-            <tr className="text-muted"><th className="py-1 font-medium">Day</th><th className="py-1 text-right font-medium">Clicks</th></tr>
+            <tr className="text-muted"><th className="py-1 font-medium">Day</th><th className="py-1 text-right font-medium capitalize">{unit}</th></tr>
           </thead>
           <tbody>
             {data.map((d) => (
               <tr key={d.day} className="border-t border-line">
                 <td className="py-1">{dayLabel(d.day, { day: "numeric", month: "short", year: "numeric" })}</td>
-                <td className="py-1 text-right">{d.clicks}</td>
+                <td className="py-1 text-right">{d.value}</td>
               </tr>
             ))}
           </tbody>

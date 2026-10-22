@@ -19,6 +19,7 @@ export function createDemoSource(): DataSource {
     kind: "demo",
     catalog: async () => snapshot,
     recordClick: async (click) => console.log(JSON.stringify({ event: "affiliate_click", ...click })),
+    recordEvent: async () => {},
     saveEnquiry: async (enquiry) => console.log(JSON.stringify({ event: "brand_enquiry", ...enquiry })),
   };
 }

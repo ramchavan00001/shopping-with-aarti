@@ -1,6 +1,6 @@
 import { motion } from "motion/react";
 import { ChevronRight, Clapperboard, Copy, Eye, Heart, Link2, Send, ShieldCheck } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
 import type { LookPayload } from "@shared/types";
 import { categoryPath, codeFromLookSlug, lookPath } from "@shared/paths";
@@ -8,6 +8,7 @@ import { stores } from "@shared/stores";
 import { useApi } from "@/lib/api";
 import { cn, formatCount, timeAgo } from "@/lib/format";
 import { usePageMeta } from "@/lib/meta";
+import { trackEvent } from "@/lib/track";
 import { toggleSaved, useSaved } from "@/lib/saved";
 import { lookUrl, shareReel, whatsappShareUrl } from "@/lib/share";
 import { WhatsAppIcon } from "@/components/icons";
@@ -26,6 +27,9 @@ export default function Look() {
   const [copied, setCopied] = useState(false);
 
   usePageMeta(data && `${data.reel.title} · #${data.reel.code}`, data?.reel.caption);
+  useEffect(() => {
+    if (data) trackEvent("look_view", data.reel.code);
+  }, [data]);
 
   if (loading && !data) return <LookSkeleton />;
   if (error || !data) return <NotFound />;

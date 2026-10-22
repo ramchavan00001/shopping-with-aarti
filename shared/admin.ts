@@ -142,11 +142,23 @@ export interface AdminEnquiry {
 
 export interface AdminStats {
   days: number;
-  totals: { reels: number; products: number; clicks: number; clicksToday: number; newEnquiries: number };
-  clicksByDay: { day: string; clicks: number }[];
+  totals: {
+    /** Unique visitors per day, summed over the period. */
+    visitors: number;
+    visits: number;
+    reelPlays: number;
+    lookViews: number;
+    clicks: number;
+    clicksToday: number;
+    reels: number;
+    products: number;
+    newEnquiries: number;
+  };
+  daily: { day: string; visitors: number; reelPlays: number; clicks: number }[];
+  sources: { source: string; visits: number; clicks: number }[];
   byStore: { store: string; clicks: number }[];
   topProducts: { id: string; title: string; store: string; reelCode: string; image: string; clicks: number }[];
-  topReels: { code: string; title: string; poster: string; clicks: number }[];
+  reelPerformance: { code: string; title: string; poster: string; plays: number; lookViews: number; clicks: number }[];
   recentEnquiries: AdminEnquiry[];
 }
 

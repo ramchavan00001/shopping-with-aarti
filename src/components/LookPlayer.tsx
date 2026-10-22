@@ -1,6 +1,7 @@
 import { Pause, Play, Volume2, VolumeX } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { PublicReel } from "@shared/types";
+import { reachedPlayThreshold, trackEvent } from "@/lib/track";
 
 /** Inline 9:16 player for look pages: autoplays muted, tap to pause. */
 export function LookPlayer({ reel }: { reel: PublicReel }) {
@@ -36,6 +37,7 @@ export function LookPlayer({ reel }: { reel: PublicReel }) {
         onTimeUpdate={(e) => {
           const v = e.currentTarget;
           if (v.duration) setProgress(v.currentTime / v.duration);
+          if (reachedPlayThreshold(v)) trackEvent("reel_play", reel.code);
         }}
         className="absolute inset-0 size-full object-cover"
       />

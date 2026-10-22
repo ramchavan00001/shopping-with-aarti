@@ -22,6 +22,7 @@ import { useApi } from "@/lib/api";
 import { cn, formatCount, timeAgo } from "@/lib/format";
 import { toggleSaved, useSaved } from "@/lib/saved";
 import { shareReel } from "@/lib/share";
+import { reachedPlayThreshold, trackEvent } from "@/lib/track";
 import { InstagramIcon } from "@/components/icons";
 import { ProductRow } from "@/components/ProductRow";
 
@@ -330,6 +331,7 @@ function ReelSlide({
             onTimeUpdate={(e) => {
               const v = e.currentTarget;
               if (v.duration) setProgress(v.currentTime / v.duration);
+              if (isActive && reachedPlayThreshold(v)) trackEvent("reel_play", reel.code);
             }}
             className="absolute inset-0 size-full object-cover"
           />

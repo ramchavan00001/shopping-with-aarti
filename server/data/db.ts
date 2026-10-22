@@ -169,23 +169,50 @@ export function createDbSource(db: Db): DataSource {
   const admin: AdminStore = {
     async stats(days) {
       const since = sql`now() - make_interval(days => ${days})`;
-      const [[totals], byDay, byStore, topProducts, topReels, recent] = await Promise.all([
-        db.execute<{ reels: number; products: number; clicks: number; clicks_today: number; new_enquiries: number }>(sql`
+      const [[totals], daily, sources, byStore, topProducts, reelPerformance, recent] = await Promise.all([
+        db.execute<{
+          visitors: number; visits: number; reel_plays: number; look_views: number; clicks: number;
+          clicks_today: number; reels: number; products: number; new_enquiries: number;
+        }>(sql`
           select
-            (select count(*)::int from reels) as reels,
-            (select count(*)::int from products where is_active) as products,
+            (select count(distinct (visitor, (created_at at time zone ${IST})::date))::int from events where created_at >= ${since} and visitor is not null) as visitors,
+            (select count(*)::int from events where kind = 'visit' and created_at >= ${since}) as visits,
+            (select count(*)::int from events where kind = 'reel_play' and created_at >= ${since}) as reel_plays,
+            (select count(*)::int from events where kind = 'look_view' and created_at >= ${since}) as look_views,
             (select count(*)::int from clicks where created_at >= ${since}) as clicks,
             (select count(*)::int from clicks where created_at >= date_trunc('day', now() at time zone ${IST}) at time zone ${IST}) as clicks_today,
+            (select count(*)::int from reels) as reels,
+            (select count(*)::int from products where is_active) as products,
             (select count(*)::int from enquiries where status = 'new') as new_enquiries
         `).then((r) => r.rows),
-        db.execute<{ day: string; clicks: number }>(sql`
-          select to_char(d, 'YYYY-MM-DD') as day, coalesce(c.n, 0)::int as clicks
-          from generate_series((now() at time zone ${IST})::date - (${days}::int - 1), (now() at time zone ${IST})::date, interval '1 day') d
-          left join (
-            select (created_at at time zone ${IST})::date as day, count(*) as n
+        db.execute<{ day: string; visitors: number; reel_plays: number; clicks: number }>(sql`
+          with days as (
+            select d::date as day
+            from generate_series((now() at time zone ${IST})::date - (${days}::int - 1), (now() at time zone ${IST})::date, interval '1 day') d
+          ),
+          ev as (
+            select (created_at at time zone ${IST})::date as day,
+              count(distinct visitor) as visitors,
+              count(*) filter (where kind = 'reel_play') as reel_plays
+            from events where created_at >= ${since} group by 1
+          ),
+          cl as (
+            select (created_at at time zone ${IST})::date as day, count(*) as clicks
             from clicks where created_at >= ${since} group by 1
-          ) c on c.day = d::date
-          order by d
+          )
+          select to_char(days.day, 'YYYY-MM-DD') as day,
+            coalesce(ev.visitors, 0)::int as visitors,
+            coalesce(ev.reel_plays, 0)::int as reel_plays,
+            coalesce(cl.clicks, 0)::int as clicks
+          from days left join ev using (day) left join cl using (day)
+          order by days.day
+        `).then((r) => r.rows),
+        db.execute<{ source: string; visits: number; clicks: number }>(sql`
+          select source, sum(visits)::int as visits, sum(clicks)::int as clicks from (
+            select source, count(*) as visits, 0 as clicks from events where kind = 'visit' and created_at >= ${since} group by source
+            union all
+            select source, 0, count(*) from clicks where created_at >= ${since} group by source
+          ) t group by source order by visits desc, clicks desc
         `).then((r) => r.rows),
         db
           .select({ store: schema.clicks.store, clicks: sql<number>`count(*)::int` })
@@ -208,29 +235,45 @@ export function createDbSource(db: Db): DataSource {
           .groupBy(schema.products.id)
           .orderBy(desc(sql`count(*)`))
           .limit(10),
-        db
-          .select({ code: schema.reels.code, title: schema.reels.title, poster: schema.reels.poster, clicks: sql<number>`count(*)::int` })
-          .from(schema.clicks)
-          .innerJoin(schema.reels, eq(schema.reels.code, schema.clicks.reelCode))
-          .where(gte(schema.clicks.createdAt, since))
-          .groupBy(schema.reels.code)
-          .orderBy(desc(sql`count(*)`))
-          .limit(5),
+        db.execute<{ code: string; title: string; poster: string; plays: number; look_views: number; clicks: number }>(sql`
+          select r.code, r.title, r.poster,
+            coalesce(e.plays, 0)::int as plays,
+            coalesce(e.look_views, 0)::int as look_views,
+            coalesce(c.clicks, 0)::int as clicks
+          from reels r
+          left join (
+            select reel_code,
+              count(*) filter (where kind = 'reel_play') as plays,
+              count(*) filter (where kind = 'look_view') as look_views
+            from events where created_at >= ${since} and reel_code is not null group by reel_code
+          ) e on e.reel_code = r.code
+          left join (
+            select reel_code, count(*) as clicks from clicks where created_at >= ${since} and reel_code is not null group by reel_code
+          ) c on c.reel_code = r.code
+          where coalesce(e.plays, 0) + coalesce(e.look_views, 0) + coalesce(c.clicks, 0) > 0
+          order by clicks desc, plays desc, look_views desc
+          limit 15
+        `).then((r) => r.rows),
         db.select().from(schema.enquiries).orderBy(desc(schema.enquiries.createdAt)).limit(5),
       ]);
       return {
         days,
         totals: {
-          reels: totals.reels,
-          products: totals.products,
+          visitors: totals.visitors,
+          visits: totals.visits,
+          reelPlays: totals.reel_plays,
+          lookViews: totals.look_views,
           clicks: totals.clicks,
           clicksToday: totals.clicks_today,
+          reels: totals.reels,
+          products: totals.products,
           newEnquiries: totals.new_enquiries,
         },
-        clicksByDay: byDay,
+        daily: daily.map((d) => ({ day: d.day, visitors: d.visitors, reelPlays: d.reel_plays, clicks: d.clicks })),
+        sources,
         byStore,
         topProducts,
-        topReels,
+        reelPerformance: reelPerformance.map((r) => ({ code: r.code, title: r.title, poster: r.poster, plays: r.plays, lookViews: r.look_views, clicks: r.clicks })),
         recentEnquiries: recent.map(toEnquiry),
       };
     },
@@ -411,6 +454,17 @@ export function createDbSource(db: Db): DataSource {
         store: click.store,
         referrer: click.referrer?.slice(0, 500) ?? null,
         userAgent: click.userAgent?.slice(0, 500) ?? null,
+        source: click.source,
+        visitor: click.visitor ?? null,
+      });
+    },
+    async recordEvent(e) {
+      await db.insert(schema.events).values({
+        kind: e.kind,
+        reelCode: e.reelCode ?? null,
+        path: e.path?.slice(0, 300) ?? null,
+        source: e.source,
+        visitor: e.visitor ?? null,
       });
     },
     async saveEnquiry(e) {

@@ -97,9 +97,29 @@ export const clicks = pgTable(
     store: text("store").notNull(),
     referrer: text("referrer"),
     userAgent: text("user_agent"),
+    /** Where the visitor came from: instagram, whatsapp, google, direct… */
+    source: text("source").notNull().default("direct"),
+    /** Anonymous per-day visitor hash (see server/analytics.ts). */
+    visitor: text("visitor"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("clicks_created_at_idx").on(t.createdAt), index("clicks_target_id_idx").on(t.targetId)],
+);
+
+/** Site activity: visits (session starts), reel plays and look-page views. */
+export const events = pgTable(
+  "events",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    /** visit | reel_play | look_view */
+    kind: text("kind").notNull(),
+    reelCode: text("reel_code"),
+    path: text("path"),
+    source: text("source").notNull().default("direct"),
+    visitor: text("visitor"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("events_created_at_idx").on(t.createdAt), index("events_kind_created_at_idx").on(t.kind, t.createdAt)],
 );
 
 export const enquiries = pgTable(

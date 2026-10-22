@@ -94,7 +94,23 @@ Log in at `/admin` with `ADMIN_PASSWORD`.
 - **Deals & sales:** add sale dates (shown with countdowns) and short-lived loot deals,
   which hide themselves when they expire.
 - **Enquiries:** brand enquiries from the About page, with reply/archive.
-- **Dashboard:** clicks per day, by store, most-clicked products and reels.
+- **Dashboard:** visitors, reel plays, look-page views and buy clicks per day; where
+  visitors come from (Instagram, WhatsApp, Google, direct…) and how many of them click;
+  per-reel performance (plays → clicks); most-clicked products; clicks by store.
+
+### How visits and clicks are counted
+
+- **Visit:** someone opens the site (once per browser tab session), labelled with its
+  source: `?utm_source=` on the link, else the referring site, else Instagram/Facebook's
+  in-app browser, else "direct". Use `https://<site>/?utm_source=instagram` as the bio
+  link and `?utm_source=whatsapp` when sharing on WhatsApp.
+- **Reel play:** a reel watched for 3 seconds (or 80% of a shorter reel), once per reel
+  per visit. **Look view:** a look page opened.
+- **Buy click:** a tap on a buy/deal/sale button, recorded by `/go/:id` with the source.
+- **Not counted:** robots and link-preview bots, and anyone logged in to `/admin`.
+- **Privacy:** no cookies or IDs on shoppers, no IP addresses stored. Unique visitors are
+  a SHA-256 hash of date + IP + browser + server secret, so they change daily and can't
+  be traced back to a person.
 
 The demo reels (stock videos and search links) are there so the site isn't empty.
 Delete them from the admin panel as real reels go in, or set `SEED_DEMO=false`

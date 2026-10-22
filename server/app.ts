@@ -3,6 +3,8 @@ import { env } from "hono/adapter";
 import { cors } from "hono/cors";
 import { createRepo, type Repo } from "./repo";
 import { createAdminApi } from "./admin-api";
+import { requestSource, shouldRecord, trackRateLimited, visitorHash } from "./analytics";
+import { eventKinds, type EventKind } from "../shared/analytics";
 import type { Catalog, DataSource } from "./data/types";
 import { stores } from "../shared/stores";
 import { categoryPath, lookPath } from "../shared/paths";
@@ -185,29 +187,57 @@ export function createApp(getSource: SourceResolver) {
   });
 
   // Tracked outbound link: record the click, then send the shopper to the store.
+  // The browser adds ?src=<traffic source> (see src/lib/track.ts).
   app.get("/go/:id", async (c) => {
     const hit = (await repoFor(c)).getOutbound(c.req.param("id"));
     if (!hit) return c.redirect("/", 302);
 
-    const ua = c.req.header("user-agent") ?? "";
-    // Link-preview crawlers (WhatsApp, Slack…) aren't shoppers.
-    if (!/bot|crawler|spider|preview|facebookexternalhit|whatsapp/i.test(ua)) {
+    if (await shouldRecord(c)) {
       background(
         c,
-        getSource(c).recordClick({
-          targetId: c.req.param("id"),
-          kind: hit.kind,
-          reelCode: hit.reel,
-          store: hit.store,
-          referrer: c.req.header("referer"),
-          userAgent: ua,
-        }),
+        visitorHash(c).then((visitor) =>
+          getSource(c).recordClick({
+            targetId: c.req.param("id"),
+            kind: hit.kind,
+            reelCode: hit.reel,
+            store: hit.store,
+            referrer: c.req.header("referer"),
+            userAgent: c.req.header("user-agent"),
+            source: requestSource(c, c.req.query("src")),
+            visitor,
+          }),
+        ),
       );
     }
 
     c.header("Cache-Control", "no-store");
     c.header("X-Robots-Tag", "noindex, nofollow");
     return c.redirect(hit.url, 302);
+  });
+
+  // Site activity from the browser (sent with navigator.sendBeacon, so the
+  // body may arrive as text/plain). Always answers 204: tracking must never
+  // break the page.
+  app.post("/api/track", async (c) => {
+    if (trackRateLimited(c) || !(await shouldRecord(c))) return c.body(null, 204);
+    const body = (await c.req.text().then((t) => JSON.parse(t)).catch(() => null)) as Record<string, unknown> | null;
+    const kind = typeof body?.kind === "string" && (eventKinds as readonly string[]).includes(body.kind) ? (body.kind as EventKind) : null;
+    if (!kind) return c.body(null, 204);
+
+    let reelCode: string | undefined;
+    if (kind !== "visit") {
+      const code = typeof body?.reel === "string" ? body.reel.toUpperCase() : "";
+      if (!(await repoFor(c)).getReel(code, {})) return c.body(null, 204);
+      reelCode = code;
+    }
+    const path = typeof body?.path === "string" ? body.path.split("?")[0].slice(0, 300) : undefined;
+    background(
+      c,
+      visitorHash(c).then((visitor) =>
+        getSource(c).recordEvent({ kind, reelCode, path, source: requestSource(c, typeof body?.src === "string" ? body.src : null), visitor }),
+      ),
+    );
+    return c.body(null, 204);
   });
 
   app.get("/sitemap.xml", async (c) => {

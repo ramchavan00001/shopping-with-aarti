@@ -1,6 +1,7 @@
 import type { Category, LootDeal, Product, Reel, SaleEvent, StoreId } from "../../shared/types";
 import type { Enquiry } from "../../shared/enquiry";
 import type { AdminStore } from "./admin";
+import type { EventKind, TrafficSource } from "../../shared/analytics";
 
 /** Everything the public site reads, loaded as one snapshot. */
 export interface Catalog {
@@ -20,12 +21,23 @@ export interface ClickEvent {
   store: StoreId;
   referrer?: string;
   userAgent?: string;
+  source: TrafficSource;
+  visitor?: string;
+}
+
+export interface SiteEvent {
+  kind: EventKind;
+  reelCode?: string;
+  path?: string;
+  source: TrafficSource;
+  visitor?: string;
 }
 
 export interface DataSource {
   readonly kind: "database" | "demo";
   catalog(): Promise<Catalog>;
   recordClick(click: ClickEvent): Promise<void>;
+  recordEvent(event: SiteEvent): Promise<void>;
   saveEnquiry(enquiry: Omit<Enquiry, "website">): Promise<void>;
   /** Only the database source can be edited from the admin panel. */
   admin?: AdminStore;
