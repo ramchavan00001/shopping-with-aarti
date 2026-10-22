@@ -1,8 +1,12 @@
 import { adminApi } from "./api";
 
-/** Upload a file straight from the browser to R2 using a signed URL from the API. */
+/**
+ * Upload a file straight from the browser to R2 using a signed URL from the
+ * API. Returns the file's path in the bucket (e.g. "reels/2026-10/x.mp4"),
+ * which the site resolves against MEDIA_BASE_URL.
+ */
 export async function uploadFile(file: File, folder: string, onProgress?: (pct: number) => void): Promise<string> {
-  const { uploadUrl, publicUrl, contentType } = await adminApi<{ uploadUrl: string; publicUrl: string; contentType: string }>("/uploads", {
+  const { uploadUrl, path, contentType } = await adminApi<{ uploadUrl: string; path: string; contentType: string }>("/uploads", {
     body: { fileName: file.name, contentType: file.type, folder },
   });
   await new Promise<void>((resolve, reject) => {
@@ -14,7 +18,7 @@ export async function uploadFile(file: File, folder: string, onProgress?: (pct: 
     xhr.onerror = () => reject(new Error("Upload blocked. Check the R2 bucket's CORS policy allows this site."));
     xhr.send(file);
   });
-  return publicUrl;
+  return path;
 }
 
 /**

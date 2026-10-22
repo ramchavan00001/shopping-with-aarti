@@ -114,7 +114,9 @@ automatically (a frame from the video).
    - or **Public Development URL → Enable** (`https://pub-….r2.dev`). Cloudflare
      rate-limits this one and says it's for development only.
 
-   That public URL is `MEDIA_BASE_URL`.
+   That public URL is `MEDIA_BASE_URL`. Uploads are saved as paths (e.g.
+   `reels/2026-10/look.mp4`), so switching from r2.dev to a custom domain later only
+   means changing `MEDIA_BASE_URL`; nothing has to be re-uploaded.
 3. Bucket → **Settings** → **CORS Policy → Add CORS policy** → JSON tab:
    ```json
    [

@@ -49,5 +49,7 @@ export async function signUpload(c: Context, fileName: string, contentType: stri
     aws: { signQuery: true },
   });
 
-  return { uploadUrl: signed.url, publicUrl: `${e.MEDIA_BASE_URL!.replace(/\/$/, "")}/${key}`, contentType };
+  // `path` is what gets saved: it's resolved against MEDIA_BASE_URL when shown,
+  // so moving to a different media domain later is a one-setting change.
+  return { uploadUrl: signed.url, path: key, publicUrl: `${e.MEDIA_BASE_URL!.replace(/\/$/, "")}/${key}`, contentType };
 }
