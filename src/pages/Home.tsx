@@ -16,6 +16,7 @@ import { Link } from "react-router";
 import type { HomePayload, PublicReel } from "@shared/types";
 import { site } from "@shared/site";
 import { stores } from "@shared/stores";
+import { categoryPath } from "@shared/paths";
 import { useApi } from "@/lib/api";
 import { formatPrice } from "@/lib/format";
 import { InstagramIcon, WhatsAppIcon } from "@/components/icons";
@@ -97,7 +98,7 @@ function Hero({ featured }: { featured?: PublicReel }) {
           </motion.p>
 
           <motion.div variants={fadeUp} className="mt-8 max-w-lg">
-            <SearchBox size="lg" />
+            <SearchBox size="lg" suggest />
             <p className="mt-2.5 pl-4 text-xs text-muted">
               Saw a reel on Instagram? Type the code from the caption, e.g. <b className="text-ink">#{featured?.code ?? "A112"}</b>
             </p>
@@ -303,7 +304,7 @@ function Categories({ categories }: { categories?: HomePayload["categories"] }) 
           c ? (
             <Reveal key={c.slug} delay={(i % 4) * 0.06}>
               <Link
-                to={`/reels?category=${c.slug}`}
+                to={categoryPath(c.slug)}
                 className="group relative block aspect-[4/5] overflow-hidden rounded-3xl bg-surface-2 shadow-soft"
               >
                 <img src={c.image} alt="" loading="lazy" className="absolute inset-0 size-full object-cover transition duration-700 group-hover:scale-110" />
@@ -468,6 +469,12 @@ function About() {
             >
               <WhatsAppIcon className="size-4" /> Get loot deals on WhatsApp
             </a>
+            <Link
+              to="/about"
+              className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-5 py-3 text-sm font-semibold transition hover:border-accent hover:text-accent"
+            >
+              More about me <ArrowRight className="size-4" />
+            </Link>
           </div>
         </Reveal>
       </div>

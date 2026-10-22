@@ -6,7 +6,8 @@ import { formatCount } from "@/lib/format";
 import { StoreDots } from "./StoreBadge";
 
 /** 9:16 reel tile. On hover-capable devices the reel previews muted. */
-export function ReelCard({ reel, priority = false }: { reel: PublicReel; priority?: boolean }) {
+/** `to` defaults to the full-screen feed; pass a look page path to link there instead. */
+export function ReelCard({ reel, priority = false, to }: { reel: PublicReel; priority?: boolean; to?: string }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [previewing, setPreviewing] = useState(false);
 
@@ -22,7 +23,7 @@ export function ReelCard({ reel, priority = false }: { reel: PublicReel; priorit
 
   return (
     <Link
-      to={`/reels?start=${reel.code}`}
+      to={to ?? `/reels?start=${reel.code}`}
       onMouseEnter={start}
       onMouseLeave={stop}
       onFocus={start}

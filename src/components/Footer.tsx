@@ -30,15 +30,17 @@ export function Footer() {
           <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Shop</h3>
           <ul className="mt-4 space-y-2.5 text-sm">
             <li><Link className="hover:text-accent" to="/reels">All reels</Link></li>
-            <li><Link className="hover:text-accent" to="/reels?category=ethnic">Kurtis & ethnic</Link></li>
-            <li><Link className="hover:text-accent" to="/reels?category=dresses">Dresses</Link></li>
-            <li><Link className="hover:text-accent" to="/reels?maxPrice=499">Under ₹499</Link></li>
+            <li><Link className="hover:text-accent" to="/category/ethnic">Kurtis & ethnic</Link></li>
+            <li><Link className="hover:text-accent" to="/category/dresses">Dresses</Link></li>
+            <li><Link className="hover:text-accent" to="/category/sarees">Sarees</Link></li>
+            <li><Link className="hover:text-accent" to="/deals">Deals & sale calendar</Link></li>
           </ul>
         </div>
         <div>
           <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Work with me</h3>
           <ul className="mt-4 space-y-2.5 text-sm">
-            <li><a className="hover:text-accent" href={`mailto:${site.email}?subject=Brand%20collaboration`}>Brand collaborations</a></li>
+            <li><Link className="hover:text-accent" to="/about">About Aarti</Link></li>
+            <li><Link className="hover:text-accent" to="/about#collab">Brand collaborations</Link></li>
             <li><a className="hover:text-accent" href={site.instagramUrl} target="_blank" rel="noopener">{site.handle}</a></li>
           </ul>
         </div>

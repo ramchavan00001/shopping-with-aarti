@@ -9,30 +9,35 @@ The same API code runs on **Render (Node)** and **Cloudflare Workers**.
 
 ## What's built so far
 
-- **Home page:** hero with a live reel preview and "find by reel code" search, store
-  strip, latest reels carousel (previews on hover), categories, budget picks, trending
-  products, how it works, and an about/Instagram/WhatsApp section. Supports light and
-  dark mode.
-- **Reels feed (`/reels`):** full-screen vertical swipe feed like Instagram. Autoplays
-  the reel on screen and loads only the neighbouring videos. Includes mute, save
-  (stored in the browser), share, and a "Shop this look" bottom sheet you can drag to
-  close. On desktop there's a product side panel and keyboard controls (↑ ↓ M).
-- **Deep links:** `/reels?start=A112`, `?category=ethnic`, `?store=meesho`,
-  `?maxPrice=499`, `?q=kurti`, `?saved=1`.
-- **Click tracking:** every buy button goes to `/go/:productId`, which logs the click
-  and redirects (302) to the affiliate link. Affiliate URLs are never sent to the
+| Page | URL | Highlights |
+|---|---|---|
+| Home | `/` | Hero with live reel preview and instant search, stores, latest reels, categories, budget picks, trending, how it works, about |
+| Reels feed | `/reels` | Full-screen vertical feed, autoplay, save/share/mute, "Shop this look" drawer, desktop product panel, keyboard controls |
+| Look page | `/look/a112-white-summer-dress-under-999` | Video, every product, share to WhatsApp/copy link, tags, similar looks. **Server-rendered meta tags** so links shared on WhatsApp/Instagram/Google show the reel's title and poster |
+| Category | `/category/dresses` | Banner, category switcher, try-on reels strip, filters (store, price, occasion, colour), sort, mobile filter sheet; filters live in the URL |
+| Search | `/search?q=kurti` | Instant results while typing (looks, products, categories); header search shows a live dropdown. Understands reel codes, spelling variants (kurta/kurti, sari/saree, jhumka/earrings) and "under 500" |
+| Deals | `/deals` | Featured live sale with countdown, other live sales, loot deals with expiry timers and copyable coupons, upcoming sale calendar, WhatsApp CTA |
+| About | `/about` | Story, promises, brand media kit, collaboration formats, FAQ, and a validated **brand enquiry form** |
+
+Also included:
+
+- **Click tracking:** every buy, deal and sale button goes to `/go/:id`, which logs the
+  click and redirects (302) to the affiliate link. Affiliate URLs are never sent to the
   browser.
+- **Saved looks:** stored in the browser, no login needed (`/reels?saved=1`).
+- **SEO:** `/sitemap.xml` lists every page, category and look.
 - **Compliance:** affiliate disclosure, `rel="sponsored"` on outbound links, and no
-  copied prices shown for Amazon products (Associates rule).
+  copied prices shown for Amazon products or deals (Associates rule).
 
 ## Project layout
 
 ```
 shared/      catalogue data, types, store definitions, site config (used by API and UI)
 server/
-  app.ts     Hono API: /api/health, /api/home, /api/reels, /api/reels/:code, /go/:id
-  repo.ts    data access (swap for a database later without touching routes)
-  node.ts    Render / Node entry: serves dist/ + API
+  app.ts     Hono API: /api/{home,reels,looks,products,search,deals,enquiries}, /go/:id, /sitemap.xml
+  repo.ts    data access and search ranking (swap for a database later without touching routes)
+  seo.ts     injects per-look meta tags into index.html
+  node.ts    Render / Node entry: serves dist/ + API + look pages
   worker.ts  Cloudflare Workers entry (static files served by Workers Assets)
 src/         React app (pages/Home.tsx, pages/Reels.tsx, components/)
 ```
@@ -78,6 +83,7 @@ To test locally against the real Workers runtime: `npm run preview:cf` (port 878
 | Variable | Where | Purpose |
 |---|---|---|
 | `MEDIA_BASE_URL` | Render env var / `wrangler.jsonc` `vars` | Public URL of the R2 bucket holding reel videos and posters. Catalogue entries with relative paths (`reels/a113.mp4`) are resolved against it. |
+| `ENQUIRY_WEBHOOK_URL` | Render env var / `npx wrangler secret put ENQUIRY_WEBHOOK_URL` | Optional. Brand enquiries are POSTed here as JSON (Google Apps Script, Zapier, Make…). Without it they only appear in the server logs. |
 | `PORT` | Render (automatic) | Node server port |
 
 ## Adding Aarti's real content
@@ -89,7 +95,11 @@ To test locally against the real Workers runtime: `npm run preview:cf` (port 878
    2–4 Mbps), plus a JPG poster. Upload as `reels/<code>.mp4` and `reels/<code>.jpg`.
 3. Add the reel and its products to `shared/catalog.ts`. Use the same code (`A113`) in
    the Instagram caption: "Shop this look → link in bio, code A113".
-4. Replace the placeholder numbers, photos and links in `shared/site.ts`.
+4. Give each product a `colour` and `occasions` so category filters work.
+5. Update `saleEvents` and `lootDeals` in `shared/catalog.ts` each sale season. Expired
+   deals hide themselves automatically.
+6. Replace the placeholder numbers, photos, story and links in `shared/site.ts` and
+   `src/pages/About.tsx` (media kit stats come from Instagram Insights).
 
 > The demo videos are free [Mixkit](https://mixkit.co) stock clips and the photos are
 > from [Unsplash](https://unsplash.com). They're placeholders only: replace them before
@@ -101,7 +111,5 @@ To test locally against the real Workers runtime: `npm run preview:cf` (port 878
   (`detectStore()` in `shared/stores.ts` is ready), and upload to R2.
 - **Database:** Postgres (Neon/Supabase), which works from both Render and Workers.
   Store reels, products and the `clicks` table, then build an analytics dashboard.
-- **Look pages** (`/look/:slug`) with SEO metadata and Open Graph images, plus a
-  sitemap.
-- **Other features:** nightly broken-link checker, Deals page, WhatsApp signup, brand
-  collaboration page, and PWA.
+- **Other features:** nightly broken-link checker, product-level wishlist, price-drop
+  alerts, and PWA.

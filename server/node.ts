@@ -7,6 +7,7 @@ import { serve } from "@hono/node-server";
 import { serveStatic } from "@hono/node-server/serve-static";
 import { compress } from "hono/compress";
 import api from "./app";
+import { renderLookHtml } from "./seo";
 
 const root = path.resolve(process.cwd(), "dist");
 const indexHtml = await readFile(path.join(root, "index.html"), "utf8");
@@ -23,6 +24,12 @@ app.use(
   },
   serveStatic({ root: "./dist" }),
 );
+// Look pages get reel-specific meta tags for link previews and SEO.
+app.get("/look/*", (c) => {
+  const { html, status } = renderLookHtml(indexHtml, new URL(c.req.url), process.env.MEDIA_BASE_URL || undefined);
+  c.header("Cache-Control", "public, max-age=300");
+  return c.html(html, status as 200 | 404);
+});
 app.route("/", api);
 app.use("*", serveStatic({ root: "./dist" }));
 // SPA fallback: unknown paths get index.html so client-side routing works.

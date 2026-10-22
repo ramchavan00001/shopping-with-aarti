@@ -14,6 +14,17 @@ export const site = {
     { value: "300+", label: "try-on reels" },
     { value: "4", label: "stores" },
   ],
+  // Numbers shown to brands on the About page. TODO: replace with real
+  // figures from Instagram Insights before sharing the page with brands.
+  mediaKit: {
+    stats: [
+      { value: "50K+", label: "Instagram followers" },
+      { value: "1.2L", label: "Avg. reel views" },
+      { value: "6.8%", label: "Engagement rate" },
+      { value: "78%", label: "Women, 18–34" },
+    ],
+    topCities: ["Mumbai", "Delhi NCR", "Pune", "Bengaluru", "Jaipur"],
+  },
   disclosure:
     "Some links on this site are affiliate links. As an Amazon Associate and affiliate partner of Flipkart, Meesho and Myntra, I earn from qualifying purchases at no extra cost to you.",
 } as const;

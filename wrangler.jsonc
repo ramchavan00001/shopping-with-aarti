@@ -1,19 +1,21 @@
 // Cloudflare Workers config. Static files in ./dist are served by Workers
-// Static Assets; only /api/* and /go/* reach the Worker code.
+// Static Assets; only the run_worker_first paths reach the Worker code.
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "shopping-with-aarti",
   "main": "server/worker.ts",
   "compatibility_date": "2025-09-01",
   "assets": {
+    "binding": "ASSETS",
     "directory": "./dist",
     "not_found_handling": "single-page-application",
-    "run_worker_first": ["/api/*", "/go/*"]
+    "run_worker_first": ["/api/*", "/go/*", "/look/*", "/sitemap.xml"]
   },
   "vars": {
     // Public base URL of the R2 bucket (or custom domain) holding reel videos
     // and posters. Leave empty while the catalogue uses absolute demo URLs.
     "MEDIA_BASE_URL": ""
+    // ENQUIRY_WEBHOOK_URL is a secret: `npx wrangler secret put ENQUIRY_WEBHOOK_URL`
   },
   "observability": {
     "enabled": true

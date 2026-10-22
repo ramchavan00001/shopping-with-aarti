@@ -12,3 +12,5 @@ services:
         value: "22"
       - key: MEDIA_BASE_URL
         value: ""
+      - key: ENQUIRY_WEBHOOK_URL
+        sync: false

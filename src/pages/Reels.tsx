@@ -1,13 +1,11 @@
 import { AnimatePresence, motion } from "motion/react";
 import {
   ArrowLeft,
-  ArrowUpRight,
   ChevronDown,
   ChevronUp,
+  ExternalLink,
   Heart,
   Play,
-  Quote,
-  Ruler,
   Send,
   ShoppingBag,
   Volume2,
@@ -16,7 +14,8 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link, useSearchParams } from "react-router";
-import type { HomePayload, PublicProduct, PublicReel } from "@shared/types";
+import type { HomePayload, PublicReel } from "@shared/types";
+import { lookPath } from "@shared/paths";
 import { site } from "@shared/site";
 import { stores } from "@shared/stores";
 import { useApi } from "@/lib/api";
@@ -24,8 +23,7 @@ import { cn, formatCount, timeAgo } from "@/lib/format";
 import { toggleSaved, useSaved } from "@/lib/saved";
 import { shareReel } from "@/lib/share";
 import { InstagramIcon } from "@/components/icons";
-import { PriceLine } from "@/components/ProductCard";
-import { StoreBadge } from "@/components/StoreBadge";
+import { ProductRow } from "@/components/ProductRow";
 
 export default function Reels() {
   const [params, setParams] = useSearchParams();
@@ -308,7 +306,7 @@ function ReelSlide({
   };
 
   const onShare = async () => {
-    const r = await shareReel(reel.code, reel.title);
+    const r = await shareReel(reel);
     if (r === "copied") flash("Link copied");
   };
 
@@ -439,42 +437,6 @@ function RailButton({ label, onClick, children }: { label: string; onClick: () =
 
 /* --------------------------------------------------------------- Products -- */
 
-function ProductRow({ product, dark = false }: { product: PublicProduct; dark?: boolean }) {
-  return (
-    <li className={cn("flex gap-3 rounded-2xl p-2.5", dark ? "bg-white/5" : "bg-surface-2/60")}>
-      <a href={product.href} target="_blank" rel="sponsored noopener" className="relative shrink-0">
-        <img src={product.image} alt={product.title} loading="lazy" className="size-24 rounded-xl object-cover" />
-      </a>
-      <div className="flex min-w-0 flex-1 flex-col">
-        <StoreBadge store={product.store} size="xs" className="self-start" />
-        <h3 className="mt-1.5 line-clamp-2 text-sm font-semibold leading-snug">{product.title}</h3>
-        <div className="mt-1"><PriceLine product={product} invert={dark} /></div>
-        {product.note && (
-          <p className={cn("mt-1 flex gap-1 text-xs italic", dark ? "text-white/65" : "text-muted")}>
-            <Quote className="mt-0.5 size-3 shrink-0 text-accent" /> {product.note}
-          </p>
-        )}
-        {product.sizeTip && (
-          <p className={cn("mt-1 flex items-center gap-1 text-xs", dark ? "text-white/65" : "text-muted")}>
-            <Ruler className="size-3 shrink-0" /> {product.sizeTip}
-          </p>
-        )}
-        <a
-          href={product.href}
-          target="_blank"
-          rel="sponsored noopener"
-          className={cn(
-            "mt-2.5 inline-flex items-center justify-center gap-1 self-start rounded-full px-4 py-2 text-xs font-bold transition active:scale-95",
-            dark ? "bg-white text-neutral-900 hover:bg-accent hover:text-white" : "bg-ink text-bg hover:bg-accent hover:text-accent-ink",
-          )}
-        >
-          Buy on {stores[product.store].name} <ArrowUpRight className="size-3.5" />
-        </a>
-      </div>
-    </li>
-  );
-}
-
 function ProductDrawer({ reel, onClose }: { reel?: PublicReel; onClose: () => void }) {
   return (
     <AnimatePresence>
@@ -522,9 +484,14 @@ function ProductDrawer({ reel, onClose }: { reel?: PublicReel; onClose: () => vo
                 <ProductRow key={p.id} product={p} />
               ))}
             </ul>
-            <p className="border-t border-line px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] text-[11px] leading-relaxed text-muted">
-              Affiliate links: you pay the same price, I may earn a small commission. Prices are approximate.
-            </p>
+            <div className="flex items-center justify-between gap-3 border-t border-line px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+              <p className="text-[11px] leading-relaxed text-muted">
+                Affiliate links: same price for you. Prices are approximate.
+              </p>
+              <Link to={lookPath(reel)} className="flex shrink-0 items-center gap-1 text-xs font-semibold text-accent">
+                Full look <ExternalLink className="size-3.5" />
+              </Link>
+            </div>
           </motion.div>
         </>
       )}
@@ -537,7 +504,12 @@ function DesktopPanel({ reel }: { reel: PublicReel }) {
     <aside className="absolute bottom-4 left-[calc(50%+min(28.125dvh,45vw)+1.5rem)] top-20 z-20 hidden w-[22rem] flex-col overflow-hidden rounded-3xl bg-white/[0.06] ring-1 ring-white/10 backdrop-blur-xl xl:flex">
       <div className="px-5 pb-3 pt-5">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/60">Shop this look</p>
-        <p className="mt-1 text-sm text-white/80">{reel.products.length} items from #{reel.code}</p>
+        <p className="mt-1 flex items-center justify-between text-sm text-white/80">
+          {reel.products.length} items from #{reel.code}
+          <Link to={lookPath(reel)} className="flex items-center gap-1 text-xs font-semibold text-white hover:underline">
+            Full look <ExternalLink className="size-3.5" />
+          </Link>
+        </p>
       </div>
       <AnimatePresence mode="wait">
         <motion.ul

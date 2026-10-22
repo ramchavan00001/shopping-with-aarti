@@ -1,4 +1,4 @@
-import { Clapperboard, Heart, Home, Search } from "lucide-react";
+import { Clapperboard, Flame, Heart, Home, Search } from "lucide-react";
 import { NavLink } from "react-router";
 import { cn } from "@/lib/format";
 import { useSaved } from "@/lib/saved";
@@ -10,6 +10,7 @@ export function MobileNav() {
     { to: "/", label: "Home", icon: Home, end: true },
     { to: "/reels", label: "Reels", icon: Clapperboard },
     { to: "/search", label: "Search", icon: Search },
+    { to: "/deals", label: "Deals", icon: Flame },
     { to: "/reels?saved=1", label: "Saved", icon: Heart, badge: saved.length },
   ];
   return (
@@ -18,7 +19,7 @@ export function MobileNav() {
       className="fixed inset-x-3 bottom-3 z-40 rounded-2xl border border-line/80 bg-surface/90 shadow-lift backdrop-blur-xl md:hidden"
       style={{ marginBottom: "env(safe-area-inset-bottom)" }}
     >
-      <ul className="grid grid-cols-4">
+      <ul className="grid grid-cols-5">
         {items.map(({ to, label, icon: Icon, end, badge }) => (
           <li key={label}>
             <NavLink

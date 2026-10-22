@@ -8,6 +8,10 @@ import Home from "./pages/Home";
 const Reels = lazy(() => import("./pages/Reels"));
 const Search = lazy(() => import("./pages/Search"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const Look = lazy(() => import("./pages/Look"));
+const Category = lazy(() => import("./pages/Category"));
+const Deals = lazy(() => import("./pages/Deals"));
+const About = lazy(() => import("./pages/About"));
 
 function ScrollManager() {
   const { pathname, hash } = useLocation();
@@ -56,6 +60,10 @@ export default function App() {
         <Route element={<SiteLayout />}>
           <Route index element={<Home />} />
           <Route path="search" element={<Search />} />
+          <Route path="look/:slug" element={<Look />} />
+          <Route path="category/:slug" element={<Category />} />
+          <Route path="deals" element={<Deals />} />
+          <Route path="about" element={<About />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>
