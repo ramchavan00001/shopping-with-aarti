@@ -2,6 +2,7 @@ import type { Category, LootDeal, Product, Reel, SaleEvent, StoreId } from "../.
 import type { Enquiry } from "../../shared/enquiry";
 import type { AdminStore } from "./admin";
 import type { EventKind, TrafficSource } from "../../shared/analytics";
+import type { SiteSettings } from "../../shared/settings";
 
 /** Everything the public site reads, loaded as one snapshot. */
 export interface Catalog {
@@ -14,6 +15,8 @@ export interface Catalog {
   productClicks: Map<string, number>;
   /** Reel code → all-time plays on the website. */
   reelPlays: Map<string, number>;
+  /** Site settings saved in the admin (overrides; merge with defaults). */
+  settings: Partial<SiteSettings> | null;
 }
 
 export interface ClickEvent {

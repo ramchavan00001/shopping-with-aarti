@@ -1,4 +1,4 @@
-import { BarChart3, Clapperboard, ExternalLink, FolderTree, Inbox, Loader2, LogOut, Percent } from "lucide-react";
+import { BarChart3, Clapperboard, ExternalLink, FolderTree, Inbox, Loader2, LogOut, Percent, Settings } from "lucide-react";
 import { lazy, Suspense, useEffect, useState, type FormEvent } from "react";
 import { NavLink, Route, Routes, useNavigate } from "react-router";
 import type { AdminConfig } from "@shared/admin";
@@ -16,6 +16,7 @@ const ReelEditor = lazy(() => import("./pages/ReelEditor"));
 const DealsAdmin = lazy(() => import("./pages/DealsAdmin"));
 const CategoriesAdmin = lazy(() => import("./pages/CategoriesAdmin"));
 const EnquiriesAdmin = lazy(() => import("./pages/EnquiriesAdmin"));
+const SettingsAdmin = lazy(() => import("./pages/SettingsAdmin"));
 
 type Session = { loggedIn: boolean; configured: boolean; database: boolean };
 
@@ -95,6 +96,7 @@ const nav = [
   { to: "/admin/deals", label: "Deals & sales", icon: Percent },
   { to: "/admin/categories", label: "Categories", icon: FolderTree },
   { to: "/admin/enquiries", label: "Enquiries", icon: Inbox },
+  { to: "/admin/settings", label: "Site settings", icon: Settings },
 ];
 
 function Shell({ database, onLogout }: { database: boolean; onLogout: () => void }) {
@@ -165,6 +167,7 @@ function Shell({ database, onLogout }: { database: boolean; onLogout: () => void
               <Route path="deals" element={<DealsAdmin />} />
               <Route path="categories" element={<CategoriesAdmin />} />
               <Route path="enquiries" element={<EnquiriesAdmin />} />
+              <Route path="settings" element={<SettingsAdmin />} />
             </Routes>
           </Suspense>
         </main>

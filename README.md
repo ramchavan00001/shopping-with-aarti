@@ -94,6 +94,10 @@ Log in at `/admin` with `ADMIN_PASSWORD`.
 - **Deals & sales:** add sale dates (shown with countdowns) and short-lived loot deals,
   which hide themselves when they expire.
 - **Enquiries:** brand enquiries from the About page, with reply/archive.
+- **Site settings:** Instagram/WhatsApp links, email, home page intro and numbers,
+  hero/About/"Meet Aarti" photos, About story, media kit. Empty WhatsApp link or email
+  hides those buttons. **Remove demo content** (same page) deletes the starter reels,
+  sales and deals in one go; demo reels that now use her own video are kept.
 - **Dashboard:** visitors, reel plays, look-page views and buy clicks per day; where
   visitors come from (Instagram, WhatsApp, Google, direct…) and how many of them click;
   per-reel performance (plays → clicks); most-clicked products; clicks by store.
@@ -167,9 +171,10 @@ automatically (a frame from the video).
 | `ENQUIRY_WEBHOOK_URL` | No | Also POST brand enquiries as JSON to this URL |
 | `PORT` | No | Render sets it |
 
-Site copy that isn't in the admin panel yet (follower numbers, WhatsApp channel link,
-email, About-page story and media kit) lives in `shared/site.ts` and
-`src/pages/About.tsx`.
+Defaults for site settings live in `shared/settings.ts`; values saved in
+Admin → Site settings override them. Privacy policy and terms are at `/privacy` and
+`/terms` (`src/pages/Privacy.tsx`, `src/pages/Terms.tsx`): plain-language templates,
+worth a quick review by someone familiar with Indian law before relying on them.
 
 ## Local development
 

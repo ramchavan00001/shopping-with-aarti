@@ -15,6 +15,7 @@ export function createDemoSource(): DataSource {
     lootDeals,
     productClicks: new Map(),
     reelPlays: new Map(),
+    settings: null,
   };
   return {
     kind: "demo",

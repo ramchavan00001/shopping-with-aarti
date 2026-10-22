@@ -1,8 +1,9 @@
 import { motion } from "motion/react";
 import { ArrowUpRight, BellRing, CalendarDays, Check, Copy, Flame, Timer, Zap } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router";
 import type { DealsPayload, PublicLootDeal, PublicSaleEvent } from "@shared/types";
-import { site } from "@shared/site";
+import { useSettings } from "@/lib/settings";
 import { stores } from "@shared/stores";
 import { useApi } from "@/lib/api";
 import { cn, discountPct, formatPrice } from "@/lib/format";
@@ -18,6 +19,7 @@ const dateRange = (a: string, b: string) => {
 };
 
 export default function Deals() {
+  const s = useSettings();
   const { data, error } = useApi<DealsPayload>("/api/deals");
   const now = useNow();
   usePageMeta("Deals & sale calendar", "Live sales, upcoming sale dates and short-lived loot deals on fashion from Amazon, Flipkart, Meesho and Myntra.");
@@ -54,6 +56,23 @@ export default function Deals() {
         </div>
       )}
 
+      {data && !live.length && !upcoming.length && !loot.length && (
+        <section className="container-page mt-10">
+          <div className="mx-auto max-w-md rounded-[2rem] border border-dashed border-line px-6 py-12 text-center">
+            <span className="mx-auto grid size-14 place-items-center rounded-full bg-accent-soft text-accent">
+              <Flame className="size-6" />
+            </span>
+            <h2 className="mt-4 font-display text-2xl font-semibold">No deals right now</h2>
+            <p className="mt-2 text-sm text-muted">
+              Big sales and price drops show up here as soon as I find them. Meanwhile, browse looks for every budget.
+            </p>
+            <Link to="/#budget" className="mt-5 inline-flex rounded-full bg-accent px-5 py-3 text-sm font-semibold text-accent-ink">
+              Shop budget picks
+            </Link>
+          </div>
+        </section>
+      )}
+
       {featured && <FeaturedSale event={featured} />}
 
       {otherLive.length > 0 && (
@@ -84,17 +103,19 @@ export default function Deals() {
         </section>
       )}
 
-      <section className="container-page pt-16">
-        <div className="flex flex-col items-start gap-5 rounded-[2rem] bg-[#0B3D22] px-6 py-10 text-white sm:flex-row sm:items-center sm:justify-between sm:px-10">
-          <div>
-            <h2 className="font-display text-2xl font-semibold sm:text-3xl">Never miss a loot deal</h2>
-            <p className="mt-1 text-sm text-white/75">I post price drops on WhatsApp the minute I find them. No spam, just deals.</p>
+      {s.whatsappChannelUrl && (
+        <section className="container-page pt-16">
+          <div className="flex flex-col items-start gap-5 rounded-[2rem] bg-[#0B3D22] px-6 py-10 text-white sm:flex-row sm:items-center sm:justify-between sm:px-10">
+            <div>
+              <h2 className="font-display text-2xl font-semibold sm:text-3xl">Never miss a loot deal</h2>
+              <p className="mt-1 text-sm text-white/75">I post price drops on WhatsApp the minute I find them. No spam, just deals.</p>
+            </div>
+            <a href={s.whatsappChannelUrl} target="_blank" rel="noopener" className="inline-flex shrink-0 items-center gap-2 rounded-full bg-[#25D366] px-5 py-3 text-sm font-bold text-[#073B1D] transition hover:brightness-105">
+              <WhatsAppIcon className="size-4" /> Join the WhatsApp channel
+            </a>
           </div>
-          <a href={site.whatsappChannelUrl} className="inline-flex shrink-0 items-center gap-2 rounded-full bg-[#25D366] px-5 py-3 text-sm font-bold text-[#073B1D] transition hover:brightness-105">
-            <WhatsAppIcon className="size-4" /> Join the WhatsApp channel
-          </a>
-        </div>
-      </section>
+        </section>
+      )}
     </div>
   );
 }
@@ -221,6 +242,7 @@ function LootCard({ deal }: { deal: PublicLootDeal }) {
 }
 
 function UpcomingRow({ event }: { event: PublicSaleEvent }) {
+  const s = useSettings();
   const now = useNow();
   const days = Math.ceil((Date.parse(event.startsAt) - now) / 86_400_000);
   return (
@@ -240,9 +262,11 @@ function UpcomingRow({ event }: { event: PublicSaleEvent }) {
             <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">Starts in</p>
             <p className="font-display text-xl font-semibold">{days <= 1 ? <CountdownText to={event.startsAt} /> : `${days} days`}</p>
           </div>
-          <a href={site.whatsappChannelUrl} className="inline-flex items-center gap-1.5 rounded-full border border-line px-4 py-2.5 text-xs font-semibold transition hover:border-accent hover:text-accent">
-            <BellRing className="size-3.5" /> Remind me
-          </a>
+          {s.whatsappChannelUrl && (
+            <a href={s.whatsappChannelUrl} target="_blank" rel="noopener" className="inline-flex items-center gap-1.5 rounded-full border border-line px-4 py-2.5 text-xs font-semibold transition hover:border-accent hover:text-accent">
+              <BellRing className="size-3.5" /> Remind me
+            </a>
+          )}
         </div>
       </div>
     </li>

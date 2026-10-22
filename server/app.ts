@@ -1,7 +1,8 @@
 import { Hono, type Context } from "hono";
 import { env } from "hono/adapter";
 import { cors } from "hono/cors";
-import { createRepo, type Repo } from "./repo";
+import { createRepo, media, type Repo } from "./repo";
+import { mergeSettings, photoFields } from "../shared/settings";
 import { createAdminApi } from "./admin-api";
 import { requestSource, shouldRecord, trackRateLimited, visitorHash } from "./analytics";
 import { eventKinds, type EventKind } from "../shared/analytics";
@@ -72,6 +73,15 @@ export function createApp(getSource: SourceResolver) {
     } catch (err) {
       return c.json({ ok: false, data: source.kind, error: String(err) }, 503);
     }
+  });
+
+  app.get("/api/settings", async (c) => {
+    const cat = await getSource(c).catalog();
+    const merged = mergeSettings(cat.settings);
+    const base = repoOpts(c).mediaBaseUrl;
+    for (const k of photoFields) merged[k] = media(merged[k], base);
+    c.header("Cache-Control", "public, max-age=60, stale-while-revalidate=600");
+    return c.json(merged);
   });
 
   app.get("/api/home", async (c) => {
@@ -248,6 +258,8 @@ export function createApp(getSource: SourceResolver) {
       { loc: "/reels", priority: "0.9" },
       { loc: "/deals", priority: "0.8" },
       { loc: "/about", priority: "0.6" },
+      { loc: "/privacy", priority: "0.2" },
+      { loc: "/terms", priority: "0.2" },
       ...repo.allCategories().map((cat) => ({ loc: categoryPath(cat.slug), priority: "0.8" })),
       ...repo.allReels().map((r) => ({ loc: lookPath(r), priority: "0.7", lastmod: r.publishedAt })),
     ];

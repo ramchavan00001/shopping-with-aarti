@@ -113,6 +113,32 @@ export const lootDealInput = z.object({
   affiliateUrl: httpUrl,
 });
 
+const stat = z.object({ value: z.string().trim().min(1, "Required").max(12), label: z.string().trim().min(1, "Required").max(40) });
+const optionalUrl = z.string().trim().max(500).refine((v) => v === "" || /^https?:\/\//.test(v), "Use a full link starting with https://");
+
+export const settingsInput = z.object({
+  instagramHandle: z.string().trim().min(2).max(60),
+  instagramUrl: httpUrl,
+  whatsappChannelUrl: optionalUrl,
+  email: z.string().trim().max(200).refine((v) => v === "" || /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v), "Enter a valid email"),
+  heroIntro: z.string().trim().min(10, "Write a short intro").max(400),
+  stats: z.array(stat).length(3),
+  heroPortrait: mediaRef,
+  aboutPortrait: mediaRef,
+  meetPortrait: mediaRef,
+  aboutStory: z.array(z.string().trim().max(800)).max(4).transform((ps) => ps.filter(Boolean)),
+  mediaKitStats: z.array(stat).length(4),
+  topCities: z.array(z.string().trim().min(1).max(40)).max(8),
+});
+export type SettingsInput = z.input<typeof settingsInput>;
+
+/** What "Remove demo content" would delete right now. */
+export interface DemoContent {
+  reels: { code: string; title: string }[];
+  events: { id: string; name: string }[];
+  deals: { id: string; title: string }[];
+}
+
 export const enquiryStatuses = ["new", "replied", "archived"] as const;
 export type EnquiryStatus = (typeof enquiryStatuses)[number];
 

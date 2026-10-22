@@ -16,7 +16,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } fro
 import { Link, useSearchParams } from "react-router";
 import type { HomePayload, PublicReel } from "@shared/types";
 import { lookPath } from "@shared/paths";
-import { site } from "@shared/site";
+import { useSettings } from "@/lib/settings";
 import { stores } from "@shared/stores";
 import { useApi } from "@/lib/api";
 import { cn, formatCount, timeAgo } from "@/lib/format";
@@ -279,6 +279,7 @@ function ReelSlide({
   onToggleMute: () => void;
   onShop: () => void;
 }) {
+  const s = useSettings();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [paused, setPaused] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -369,7 +370,7 @@ function ReelSlide({
           <RailButton label={muted ? "Sound" : "Mute"} onClick={onToggleMute}>
             {muted ? <VolumeX className="size-6" /> : <Volume2 className="size-6" />}
           </RailButton>
-          <a href={reel.instagramUrl || site.instagramUrl} target="_blank" rel="noopener" className="flex flex-col items-center gap-1 text-[11px] font-semibold">
+          <a href={reel.instagramUrl || s.instagramUrl} target="_blank" rel="noopener" className="flex flex-col items-center gap-1 text-[11px] font-semibold">
             <span className="grid size-11 place-items-center rounded-full bg-black/30 backdrop-blur"><InstagramIcon className="size-6" /></span>
             Insta
           </a>

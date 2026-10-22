@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter } from "react-router";
 import App from "./App";
 import { installTracking } from "./lib/track";
+import { SettingsProvider } from "./lib/settings";
 import "./index.css";
 
 installTracking();
@@ -10,7 +11,9 @@ installTracking();
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <BrowserRouter>
-      <App />
+      <SettingsProvider>
+        <App />
+      </SettingsProvider>
     </BrowserRouter>
   </StrictMode>,
 );

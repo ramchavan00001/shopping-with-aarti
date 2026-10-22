@@ -14,10 +14,10 @@ import {
 import { useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router";
 import type { HomePayload, PublicReel } from "@shared/types";
-import { site } from "@shared/site";
 import { stores } from "@shared/stores";
 import { categoryPath } from "@shared/paths";
 import { useApi } from "@/lib/api";
+import { useSettings } from "@/lib/settings";
 import { formatPrice } from "@/lib/format";
 import { InstagramIcon, WhatsAppIcon } from "@/components/icons";
 import { ProductCard, ProductCardSkeleton } from "@/components/ProductCard";
@@ -71,6 +71,7 @@ export default function Home() {
 /* ------------------------------------------------------------------ Hero -- */
 
 function Hero({ featured }: { featured?: PublicReel }) {
+  const s = useSettings();
   return (
     <section className="relative overflow-hidden">
       {/* soft background blobs */}
@@ -93,8 +94,7 @@ function Hero({ featured }: { featured?: PublicReel }) {
             by me.
           </motion.h1>
           <motion.p variants={fadeUp} className="mt-6 max-w-xl text-base leading-relaxed text-muted sm:text-lg">
-            Hi, I'm Aarti. I buy affordable fashion from Amazon, Flipkart, Meesho and Myntra, try it on honestly, and
-            link every piece here, so you can shop the look in one tap.
+            {s.heroIntro}
           </motion.p>
 
           <motion.div variants={fadeUp} className="mt-8 max-w-lg">
@@ -113,17 +113,17 @@ function Hero({ featured }: { featured?: PublicReel }) {
               <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
             </Link>
             <a
-              href={site.instagramUrl}
+              href={s.instagramUrl}
               target="_blank"
               rel="noopener"
               className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-5 py-3.5 text-sm font-semibold transition hover:border-accent hover:text-accent"
             >
-              <InstagramIcon className="size-4" /> {site.handle}
+              <InstagramIcon className="size-4" /> {s.instagramHandle}
             </a>
           </motion.div>
 
           <motion.dl variants={fadeUp} className="mt-10 flex gap-8 sm:gap-12">
-            {site.stats.map((s) => (
+            {s.stats.map((s) => (
               <div key={s.label}>
                 <dt className="sr-only">{s.label}</dt>
                 <dd className="font-display text-3xl font-semibold">{s.value}</dd>
@@ -140,6 +140,7 @@ function Hero({ featured }: { featured?: PublicReel }) {
 }
 
 function HeroVisual({ featured }: { featured?: PublicReel }) {
+  const s = useSettings();
   const [muted, setMuted] = useState(true);
   const chips = featured?.products.slice(0, 2) ?? [];
 
@@ -152,7 +153,7 @@ function HeroVisual({ featured }: { featured?: PublicReel }) {
     >
       {/* arch portrait */}
       <div className="absolute left-0 top-6 h-[78%] w-[62%] overflow-hidden rounded-t-full rounded-b-[2rem] border-4 border-surface shadow-lift">
-        <img src={site.heroPortrait} alt="Aarti with a tote bag on her shoulder" className="size-full object-cover" fetchPriority="high" />
+        <img src={s.heroPortrait} alt="Aarti with a tote bag on her shoulder" className="size-full object-cover" fetchPriority="high" />
       </div>
 
       {/* phone with the featured reel */}
@@ -433,16 +434,17 @@ function HowItWorks() {
 /* ----------------------------------------------------------------- About -- */
 
 function About() {
+  const s = useSettings();
   return (
     <section id="about" className="container-page scroll-mt-24 pt-16 sm:pt-24">
       <div className="grid items-center gap-10 md:grid-cols-[0.9fr_1.1fr] lg:gap-16">
         <Reveal className="relative mx-auto w-full max-w-sm">
           <div className="aspect-[4/5] overflow-hidden rounded-[2rem] shadow-lift">
-            <img src={site.meetPortrait} alt="Aarti" loading="lazy" className="size-full object-cover object-top" />
+            <img src={s.meetPortrait} alt="Aarti" loading="lazy" className="size-full object-cover object-top" />
           </div>
           <div className="absolute -bottom-5 -right-3 rounded-2xl border border-line bg-surface px-4 py-3 shadow-lift sm:-right-8">
-            <p className="font-display text-2xl font-semibold">{site.stats[0].value}</p>
-            <p className="text-xs text-muted">{site.stats[0].label} trust my picks</p>
+            <p className="font-display text-2xl font-semibold">{s.stats[0].value}</p>
+            <p className="text-xs text-muted">{s.stats[0].label} trust my picks</p>
           </div>
         </Reveal>
         <Reveal>
@@ -462,19 +464,23 @@ function About() {
           </div>
           <div className="mt-8 flex flex-wrap gap-3">
             <a
-              href={site.instagramUrl}
+              href={s.instagramUrl}
               target="_blank"
               rel="noopener"
               className="inline-flex items-center gap-2 rounded-full bg-gradient-to-tr from-[#F58529] via-[#DD2A7B] to-[#8134AF] px-5 py-3 text-sm font-semibold text-white shadow-soft transition hover:brightness-110"
             >
               <InstagramIcon className="size-4" /> Follow on Instagram
             </a>
-            <a
-              href={site.whatsappChannelUrl}
-              className="inline-flex items-center gap-2 rounded-full bg-[#25D366] px-5 py-3 text-sm font-semibold text-[#073B1D] shadow-soft transition hover:brightness-105"
-            >
-              <WhatsAppIcon className="size-4" /> Get loot deals on WhatsApp
-            </a>
+            {s.whatsappChannelUrl && (
+              <a
+                href={s.whatsappChannelUrl}
+                target="_blank"
+                rel="noopener"
+                className="inline-flex items-center gap-2 rounded-full bg-[#25D366] px-5 py-3 text-sm font-semibold text-[#073B1D] shadow-soft transition hover:brightness-105"
+              >
+                <WhatsAppIcon className="size-4" /> Get loot deals on WhatsApp
+              </a>
+            )}
             <Link
               to="/about"
               className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-5 py-3 text-sm font-semibold transition hover:border-accent hover:text-accent"

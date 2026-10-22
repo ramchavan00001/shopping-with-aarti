@@ -8,6 +8,7 @@ import {
   lootDealInput,
   reelInput,
   saleEventInput,
+  settingsInput,
   type AdminConfig,
 } from "../shared/admin";
 import { AdminError, type AdminStore } from "./data/admin";
@@ -151,6 +152,19 @@ export function createAdminApi(getSource: SourceResolver) {
     await store(c).deleteDeal(c.req.param("id"));
     return c.json({ ok: true });
   });
+
+  // Site settings
+  api.get("/settings", async (c) => c.json({ settings: await store(c).getSettings() }));
+  api.put("/settings", async (c) => {
+    const input = await parse(c, settingsInput);
+    if (input instanceof Response) return input;
+    await store(c).saveSettings(input);
+    return c.json({ ok: true });
+  });
+
+  // Demo content from the starter catalogue
+  api.get("/demo-content", async (c) => c.json(await store(c).demoContent()));
+  api.post("/demo-content/clear", async (c) => c.json({ removed: await store(c).clearDemoContent() }));
 
   // Enquiries
   api.get("/enquiries", async (c) => c.json({ enquiries: await store(c).listEnquiries() }));

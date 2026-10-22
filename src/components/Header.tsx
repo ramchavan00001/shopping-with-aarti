@@ -5,7 +5,7 @@ import type { HomePayload } from "@shared/types";
 import { categoryPath } from "@shared/paths";
 import { useApi } from "@/lib/api";
 import { useSavedCount } from "@/lib/saved";
-import { site } from "@shared/site";
+import { useSettings } from "@/lib/settings";
 import { cn } from "@/lib/format";
 import { useTheme } from "@/lib/theme";
 import { InstagramIcon } from "./icons";
@@ -109,6 +109,7 @@ export function ThemeToggle({ className }: { className?: string }) {
 }
 
 export function Header() {
+  const s = useSettings();
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -140,7 +141,7 @@ export function Header() {
           <SavedLink />
           <ThemeToggle />
           <a
-            href={site.instagramUrl}
+            href={s.instagramUrl}
             target="_blank"
             rel="noopener"
             className="hidden items-center gap-2 rounded-full bg-gradient-to-tr from-[#F58529] via-[#DD2A7B] to-[#8134AF] px-4 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:brightness-110 sm:flex"

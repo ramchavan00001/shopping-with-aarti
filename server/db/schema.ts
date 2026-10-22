@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { bigserial, boolean, date, index, integer, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
+import { bigserial, boolean, date, index, integer, jsonb, pgTable, serial, text, timestamp } from "drizzle-orm/pg-core";
 
 export const categories = pgTable("categories", {
   slug: text("slug").primaryKey(),
@@ -139,3 +139,10 @@ export const enquiries = pgTable(
   },
   (t) => [index("enquiries_created_at_idx").on(t.createdAt)],
 );
+
+/** Key/value site settings edited in the admin (key "site" holds SiteSettings overrides). */
+export const settings = pgTable("settings", {
+  key: text("key").primaryKey(),
+  value: jsonb("value").notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});

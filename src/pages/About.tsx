@@ -15,10 +15,10 @@ import {
 } from "lucide-react";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { Link } from "react-router";
-import { site } from "@shared/site";
 import { budgets, collabTypes, validateEnquiry, type EnquiryErrors } from "@shared/enquiry";
 import { cn } from "@/lib/format";
 import { usePageMeta } from "@/lib/meta";
+import { useSettings } from "@/lib/settings";
 import { InstagramIcon } from "@/components/icons";
 
 const promises = [
@@ -41,6 +41,7 @@ const faqs = [
 ];
 
 export default function About() {
+  const s = useSettings();
   usePageMeta("About Aarti & brand collaborations", "Meet Aarti, who tries on affordable fashion so you don't have to. Brands can enquire about collaborations here.");
 
   return (
@@ -49,10 +50,10 @@ export default function About() {
       <section className="container-page grid items-center gap-10 pt-8 sm:pt-12 lg:grid-cols-[1fr_1.1fr] lg:gap-16">
         <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6 }} className="relative mx-auto w-full max-w-md">
           <div className="aspect-[4/5] overflow-hidden rounded-t-full rounded-b-[2rem] border-4 border-surface shadow-lift">
-            <img src={site.aboutPortrait} alt="Aarti" className="size-full object-cover" />
+            <img src={s.aboutPortrait} alt="Aarti" className="size-full object-cover" />
           </div>
           <div className="absolute -bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full bg-ink px-4 py-2.5 text-sm font-semibold text-bg shadow-lift">
-            <InstagramIcon className="size-4" /> {site.handle}
+            <InstagramIcon className="size-4" /> {s.instagramHandle}
           </div>
         </motion.div>
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1 }}>
@@ -61,15 +62,9 @@ export default function About() {
             Hi, I'm Aarti. I try it on <span className="italic text-accent">before</span> you buy it.
           </h1>
           <div className="mt-5 space-y-4 text-base leading-relaxed text-muted sm:text-lg">
-            {/* TODO: replace with Aarti's own story in her words. */}
-            <p>
-              It started with one too many disappointing online orders: dresses that looked nothing like the photos,
-              "free size" that fit nobody. So I started filming honest try-ons for my friends.
-            </p>
-            <p>
-              Today a community of shoppers watches my reels before they hit "Buy". I test fabric, fit and stitching on
-              a real body and a real budget, so you can shop with confidence.
-            </p>
+            {s.aboutStory.map((para, i) => (
+              <p key={i}>{para}</p>
+            ))}
           </div>
           <div className="mt-8 flex flex-wrap gap-3">
             <a href="#collab" className="inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3.5 text-sm font-semibold text-accent-ink shadow-lift transition hover:brightness-110">
@@ -110,7 +105,7 @@ export default function About() {
             Reach shoppers who are ready to buy
           </h2>
           <dl className="mt-10 grid grid-cols-2 gap-6 lg:grid-cols-4">
-            {site.mediaKit.stats.map((s) => (
+            {s.mediaKitStats.map((s) => (
               <div key={s.label} className="rounded-2xl bg-bg/5 p-5 ring-1 ring-bg/10">
                 <dd className="font-display text-4xl font-semibold">{s.value}</dd>
                 <dt className="mt-1 text-sm text-bg/65">{s.label}</dt>
@@ -119,7 +114,7 @@ export default function About() {
           </dl>
           <div className="mt-6 flex flex-wrap items-center gap-2 text-sm text-bg/70">
             <MapPin className="size-4 text-gold" /> Top cities:
-            {site.mediaKit.topCities.map((c) => (
+            {s.topCities.map((c) => (
               <span key={c} className="rounded-full bg-bg/10 px-3 py-1 text-xs font-medium text-bg">{c}</span>
             ))}
           </div>
@@ -146,9 +141,11 @@ export default function About() {
             <p className="mt-3 text-muted">
               Tell me about your brand and what you have in mind. I reply to every enquiry within 2 working days.
             </p>
-            <p className="mt-4 text-sm text-muted">
-              Prefer email? <a className="font-semibold text-accent hover:underline" href={`mailto:${site.email}`}>{site.email}</a>
-            </p>
+            {s.email && (
+              <p className="mt-4 text-sm text-muted">
+                Prefer email? <a className="font-semibold text-accent hover:underline" href={`mailto:${s.email}`}>{s.email}</a>
+              </p>
+            )}
             <div className="mt-8 space-y-3">
               {faqs.map((f) => (
                 <details key={f.q} className="group rounded-2xl border border-line bg-surface px-5 py-4 [&_summary::-webkit-details-marker]:hidden">
@@ -188,6 +185,7 @@ const inputCls = (err?: string) =>
   );
 
 function EnquiryForm() {
+  const s = useSettings();
   const [errors, setErrors] = useState<EnquiryErrors>({});
   const [state, setState] = useState<"idle" | "sending" | "sent" | "failed">("idle");
   const [failMsg, setFailMsg] = useState("");
@@ -266,7 +264,12 @@ function EnquiryForm() {
       </div>
       {state === "failed" && (
         <p role="alert" className="mt-5 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-950/40 dark:text-red-300">
-          {failMsg} You can also email <a className="font-semibold underline" href={`mailto:${site.email}`}>{site.email}</a>.
+          {failMsg}
+          {s.email && (
+            <>
+              {" "}You can also email <a className="font-semibold underline" href={`mailto:${s.email}`}>{s.email}</a>.
+            </>
+          )}
         </p>
       )}
       <button
@@ -277,7 +280,9 @@ function EnquiryForm() {
         {state === "sending" ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
         {state === "sending" ? "Sending…" : "Send enquiry"}
       </button>
-      <p className="mt-3 text-xs text-muted">I'll only use your details to reply to this enquiry.</p>
+      <p className="mt-3 text-xs text-muted">
+        I'll only use your details to reply to this enquiry. See the <Link to="/privacy" className="underline hover:text-accent">privacy policy</Link>.
+      </p>
     </form>
   );
 }

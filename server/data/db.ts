@@ -3,6 +3,8 @@ import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
 import pg from "pg";
 import * as schema from "../db/schema";
 import type { AdminEnquiry, EnquiryStatus } from "../../shared/admin";
+import { lootDeals as demoDeals, reels as demoReels, saleEvents as demoEvents } from "../../shared/catalog";
+import { mergeSettings, type SiteSettings } from "../../shared/settings";
 import type { Category, Colour, LootDeal, Occasion, Product, Reel, SaleEvent, StoreId } from "../../shared/types";
 import { AdminError, type AdminStore } from "./admin";
 import type { Catalog, DataSource } from "./types";
@@ -11,6 +13,10 @@ export type Db = NodePgDatabase<typeof schema>;
 
 const CACHE_MS = 30_000;
 const IST = "Asia/Kolkata";
+
+const demoReelCodes = demoReels.map((r) => r.code);
+const demoEventIds = demoEvents.map((e) => e.id);
+const demoDealIds = demoDeals.map((d) => d.id);
 
 const newId = (prefix: string) => `${prefix}_${crypto.randomUUID().replace(/-/g, "").slice(0, 10)}`;
 
@@ -123,7 +129,7 @@ export function createDbSource(db: Db): DataSource {
   let cached: { at: number; value: Promise<Catalog> } | undefined;
 
   async function loadCatalog(): Promise<Catalog> {
-    const [cats, reelRows, productRows, events, deals, clickRows, playRows] = await Promise.all([
+    const [cats, reelRows, productRows, events, deals, clickRows, playRows, settingRows] = await Promise.all([
       db.select().from(schema.categories).orderBy(asc(schema.categories.sortOrder), asc(schema.categories.name)),
       db.select().from(schema.reels),
       db.select().from(schema.products).where(eq(schema.products.isActive, true)).orderBy(asc(schema.products.sortOrder)),
@@ -135,6 +141,7 @@ export function createDbSource(db: Db): DataSource {
         .where(and(eq(schema.clicks.kind, "product"), gte(schema.clicks.createdAt, sql`now() - interval '30 days'`)))
         .groupBy(schema.clicks.targetId),
       sitePlays(),
+      db.select().from(schema.settings).where(eq(schema.settings.key, "site")),
     ]);
     return {
       categories: cats.map((c): Category => ({ slug: c.slug, name: c.name, image: c.image, blurb: c.blurb, sortOrder: c.sortOrder })),
@@ -144,6 +151,7 @@ export function createDbSource(db: Db): DataSource {
       lootDeals: deals.map(toDeal),
       productClicks: new Map(clickRows.map((r) => [r.id, r.n])),
       reelPlays: playRows,
+      settings: (settingRows[0]?.value as Partial<SiteSettings> | undefined) ?? null,
     };
   }
 
@@ -451,6 +459,47 @@ export function createDbSource(db: Db): DataSource {
     deleteDeal: (id) =>
       write(async () => {
         await db.delete(schema.lootDeals).where(eq(schema.lootDeals.id, id));
+      }),
+
+    async getSettings() {
+      const [row] = await db.select().from(schema.settings).where(eq(schema.settings.key, "site"));
+      return mergeSettings(row?.value as Partial<SiteSettings> | undefined);
+    },
+
+    saveSettings: (input) =>
+      write(async () => {
+        await db
+          .insert(schema.settings)
+          .values({ key: "site", value: input })
+          .onConflictDoUpdate({ target: schema.settings.key, set: { value: input, updatedAt: new Date() } });
+      }),
+
+    async demoContent() {
+      // A demo reel counts only while it still plays the stock demo video, so a
+      // demo reel Aarti has reworked into a real one is never removed.
+      const [reelRows, eventRows, dealRows] = await Promise.all([
+        db.select({ code: schema.reels.code, title: schema.reels.title, video: schema.reels.video }).from(schema.reels).where(inArray(schema.reels.code, demoReelCodes)),
+        db.select({ id: schema.saleEvents.id, name: schema.saleEvents.name }).from(schema.saleEvents).where(inArray(schema.saleEvents.id, demoEventIds)),
+        db.select({ id: schema.lootDeals.id, title: schema.lootDeals.title }).from(schema.lootDeals).where(inArray(schema.lootDeals.id, demoDealIds)),
+      ]);
+      const demoVideos = new Set(demoReels.map((r) => r.video));
+      return {
+        reels: reelRows.filter((r) => demoVideos.has(r.video)).map(({ code, title }) => ({ code, title })),
+        events: eventRows,
+        deals: dealRows,
+      };
+    },
+
+    clearDemoContent: () =>
+      write(async () => {
+        const found = await admin.demoContent();
+        await db.transaction(async (tx) => {
+          // Products go with their reels (ON DELETE CASCADE).
+          if (found.reels.length) await tx.delete(schema.reels).where(inArray(schema.reels.code, found.reels.map((r) => r.code)));
+          if (found.events.length) await tx.delete(schema.saleEvents).where(inArray(schema.saleEvents.id, found.events.map((e) => e.id)));
+          if (found.deals.length) await tx.delete(schema.lootDeals).where(inArray(schema.lootDeals.id, found.deals.map((d) => d.id)));
+        });
+        return found;
       }),
 
     async listEnquiries() {

@@ -6,12 +6,15 @@ import type {
   AdminEvent,
   AdminReel,
   AdminStats,
+  DemoContent,
   EnquiryStatus,
   categoryInput,
   lootDealInput,
   reelInput,
   saleEventInput,
+  settingsInput,
 } from "../../shared/admin";
+import type { SiteSettings } from "../../shared/settings";
 
 /** Thrown for problems the admin can fix (duplicate code, category in use…). */
 export class AdminError extends Error {
@@ -45,6 +48,13 @@ export interface AdminStore {
   listDeals(): Promise<AdminDeal[]>;
   saveDeal(input: z.output<typeof lootDealInput>): Promise<AdminDeal>;
   deleteDeal(id: string): Promise<void>;
+
+  getSettings(): Promise<SiteSettings>;
+  saveSettings(input: z.output<typeof settingsInput>): Promise<void>;
+
+  /** Untouched demo items from the seed catalogue, and their removal. */
+  demoContent(): Promise<DemoContent>;
+  clearDemoContent(): Promise<DemoContent>;
 
   listEnquiries(): Promise<AdminEnquiry[]>;
   setEnquiryStatus(id: number, status: EnquiryStatus): Promise<void>;
