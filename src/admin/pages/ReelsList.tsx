@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import type { AdminReel } from "@shared/admin";
 import { lookPath } from "@shared/paths";
-import { cn } from "@/lib/format";
+import { cn, formatCount } from "@/lib/format";
 import { StoreDots } from "@/components/StoreBadge";
 import { resolveMedia, useAdminQuery } from "../api";
 import { useAdminConfig } from "../context";
@@ -80,7 +80,9 @@ export default function ReelsList() {
                   </p>
                 </div>
                 <div className="hidden shrink-0 flex-col items-end gap-1.5 sm:flex">
-                  <span className="text-xs text-muted">{r.products.length} products</span>
+                  <span className="text-xs text-muted">
+                    {r.products.length} products · {formatCount(r.views ?? 0)} IG views · {formatCount(r.sitePlays ?? 0)} site plays
+                  </span>
                   <StoreDots ids={r.products.map((p) => p.store)} />
                 </div>
               </Link>

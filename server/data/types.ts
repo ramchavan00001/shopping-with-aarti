@@ -12,6 +12,8 @@ export interface Catalog {
   lootDeals: LootDeal[];
   /** Product id → clicks in the last 30 days. */
   productClicks: Map<string, number>;
+  /** Reel code → all-time plays on the website. */
+  reelPlays: Map<string, number>;
 }
 
 export interface ClickEvent {

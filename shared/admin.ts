@@ -122,7 +122,8 @@ export type CategoryInput = z.input<typeof categoryInput>;
 export type SaleEventInput = z.input<typeof saleEventInput>;
 export type LootDealInput = z.input<typeof lootDealInput>;
 
-export type AdminReel = Reel & { products: Product[] };
+/** In the admin, `views` is the Instagram figure as typed; `sitePlays` is counted on the website. */
+export type AdminReel = Reel & { products: Product[]; sitePlays?: number };
 export type AdminEvent = SaleEvent;
 export type AdminDeal = LootDeal;
 export type AdminCategory = Category & { reelCount: number; productCount: number };

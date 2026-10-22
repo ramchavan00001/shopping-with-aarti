@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gte, notInArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, notInArray, sql } from "drizzle-orm";
 import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
 import pg from "pg";
 import * as schema from "../db/schema";
@@ -123,7 +123,7 @@ export function createDbSource(db: Db): DataSource {
   let cached: { at: number; value: Promise<Catalog> } | undefined;
 
   async function loadCatalog(): Promise<Catalog> {
-    const [cats, reelRows, productRows, events, deals, clickRows] = await Promise.all([
+    const [cats, reelRows, productRows, events, deals, clickRows, playRows] = await Promise.all([
       db.select().from(schema.categories).orderBy(asc(schema.categories.sortOrder), asc(schema.categories.name)),
       db.select().from(schema.reels),
       db.select().from(schema.products).where(eq(schema.products.isActive, true)).orderBy(asc(schema.products.sortOrder)),
@@ -134,6 +134,7 @@ export function createDbSource(db: Db): DataSource {
         .from(schema.clicks)
         .where(and(eq(schema.clicks.kind, "product"), gte(schema.clicks.createdAt, sql`now() - interval '30 days'`)))
         .groupBy(schema.clicks.targetId),
+      sitePlays(),
     ]);
     return {
       categories: cats.map((c): Category => ({ slug: c.slug, name: c.name, image: c.image, blurb: c.blurb, sortOrder: c.sortOrder })),
@@ -142,7 +143,18 @@ export function createDbSource(db: Db): DataSource {
       saleEvents: events.map(toEvent),
       lootDeals: deals.map(toDeal),
       productClicks: new Map(clickRows.map((r) => [r.id, r.n])),
+      reelPlays: playRows,
     };
+  }
+
+  /** Reel code → all-time plays recorded on the website. */
+  async function sitePlays(codes?: string[]) {
+    const rows = await db
+      .select({ code: schema.events.reelCode, n: sql<number>`count(*)::int` })
+      .from(schema.events)
+      .where(and(eq(schema.events.kind, "reel_play"), codes ? inArray(schema.events.reelCode, codes) : undefined))
+      .groupBy(schema.events.reelCode);
+    return new Map(rows.flatMap((r) => (r.code ? [[r.code, r.n] as const] : [])));
   }
 
   function catalog() {
@@ -291,18 +303,26 @@ export function createDbSource(db: Db): DataSource {
     },
 
     async listReels() {
-      const [reelRows, productRows] = await Promise.all([
+      const [reelRows, productRows, plays] = await Promise.all([
         db.select().from(schema.reels).orderBy(desc(schema.reels.publishedAt), desc(schema.reels.createdAt)),
         db.select().from(schema.products).orderBy(asc(schema.products.sortOrder)),
+        sitePlays(),
       ]);
-      return reelRows.map((r) => ({ ...toReel(r), products: productRows.filter((p) => p.reelCode === r.code).map(toProduct) }));
+      return reelRows.map((r) => ({
+        ...toReel(r),
+        sitePlays: plays.get(r.code) ?? 0,
+        products: productRows.filter((p) => p.reelCode === r.code).map(toProduct),
+      }));
     },
 
     async getReel(code) {
       const [row] = await db.select().from(schema.reels).where(eq(schema.reels.code, code.toUpperCase()));
       if (!row) return undefined;
-      const productRows = await db.select().from(schema.products).where(eq(schema.products.reelCode, row.code)).orderBy(asc(schema.products.sortOrder));
-      return { ...toReel(row), products: productRows.map(toProduct) };
+      const [productRows, plays] = await Promise.all([
+        db.select().from(schema.products).where(eq(schema.products.reelCode, row.code)).orderBy(asc(schema.products.sortOrder)),
+        sitePlays([row.code]),
+      ]);
+      return { ...toReel(row), sitePlays: plays.get(row.code) ?? 0, products: productRows.map(toProduct) };
     },
 
     saveReel: (input, originalCode) =>

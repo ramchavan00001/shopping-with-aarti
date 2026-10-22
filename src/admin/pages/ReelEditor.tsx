@@ -5,7 +5,7 @@ import { slugify, type AdminCategory, type AdminReel, type ProductInput, type Re
 import { lookPath } from "@shared/paths";
 import { detectStore, stores } from "@shared/stores";
 import { colours, occasions, type Colour, type Occasion, type StoreId } from "@shared/types";
-import { cn } from "@/lib/format";
+import { cn, formatCount } from "@/lib/format";
 import { adminApi, ApiError, useAdminQuery } from "../api";
 import { useAdminConfig } from "../context";
 import { MediaInput } from "../MediaInput";
@@ -346,7 +346,23 @@ export default function ReelEditor() {
             <Field label="Instagram reel link" error={err("instagramUrl")} optional>
               <TextInput value={form.instagramUrl} onChange={(e) => set("instagramUrl", e.target.value)} error={err("instagramUrl")} placeholder="https://www.instagram.com/reel/…" />
             </Field>
-            <Field label="Instagram views" hint="Used to rank trending until click data builds up." optional>
+            <Field
+              label="Instagram views"
+              hint={
+                <>
+                  The site shows this plus plays on the website
+                  {!isNew && (
+                    <>
+                      {": "}
+                      <b className="text-ink">{(Number(form.views) || 0).toLocaleString("en-IN")}</b> + {(existing.data?.reel.sitePlays ?? 0).toLocaleString("en-IN")} website plays ={" "}
+                      <b className="text-ink">{formatCount((Number(form.views) || 0) + (existing.data?.reel.sitePlays ?? 0))}</b>
+                    </>
+                  )}
+                  .
+                </>
+              }
+              optional
+            >
               <TextInput inputMode="numeric" value={form.views} onChange={(e) => set("views", e.target.value.replace(/\D/g, ""))} />
             </Field>
           </div>

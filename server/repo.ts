@@ -119,7 +119,10 @@ function scoreText(fields: { text: string; weight: number }[], terms: string[][]
 export function createRepo(cat: Catalog) {
   const categories = [...cat.categories].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
   // Hidden reels, and products on them, never reach public pages.
-  const reels = cat.reels.filter((r) => r.isPublished !== false);
+  // Shown views = the Instagram views typed in the admin + plays on this website.
+  const reels = cat.reels
+    .filter((r) => r.isPublished !== false)
+    .map((r) => ({ ...r, views: (r.views ?? 0) + (cat.reelPlays.get(r.code) ?? 0) }));
   const visibleCodes = new Set(reels.map((r) => r.code));
   const products = cat.products.filter((p) => visibleCodes.has(p.reelCode));
   const { saleEvents, lootDeals } = cat;
