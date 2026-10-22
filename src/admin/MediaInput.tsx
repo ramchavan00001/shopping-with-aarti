@@ -1,7 +1,8 @@
 import { ImageIcon, Loader2, Upload, Video } from "lucide-react";
 import { useRef, useState } from "react";
 import { cn } from "@/lib/format";
-import { adminApi, resolveMedia } from "./api";
+import { resolveMedia } from "./api";
+import { uploadFile } from "./upload";
 import { useAdminConfig } from "./context";
 import { inputClass } from "./ui";
 
@@ -18,6 +19,8 @@ export function MediaInput({
   folder,
   error,
   aspect = "aspect-square",
+  onUploaded,
+  busyLabel,
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -25,6 +28,10 @@ export function MediaInput({
   folder: string;
   error?: string;
   aspect?: string;
+  /** Called after a successful upload with the original local file. */
+  onUploaded?: (file: File, url: string) => void;
+  /** Show a busy overlay (e.g. while something else fills this field). */
+  busyLabel?: string;
 }) {
   const { uploadsEnabled, mediaBaseUrl } = useAdminConfig();
   const fileRef = useRef<HTMLInputElement>(null);
@@ -36,19 +43,9 @@ export function MediaInput({
     setUploadError(undefined);
     setProgress(0);
     try {
-      const { uploadUrl, publicUrl, contentType } = await adminApi<{ uploadUrl: string; publicUrl: string; contentType: string }>("/uploads", {
-        body: { fileName: file.name, contentType: file.type, folder },
-      });
-      await new Promise<void>((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open("PUT", uploadUrl);
-        xhr.setRequestHeader("Content-Type", contentType);
-        xhr.upload.onprogress = (e) => e.lengthComputable && setProgress(Math.round((e.loaded / e.total) * 100));
-        xhr.onload = () => (xhr.status < 300 ? resolve() : reject(new Error(`Upload failed (${xhr.status})`)));
-        xhr.onerror = () => reject(new Error("Upload failed. Check the bucket's CORS settings."));
-        xhr.send(file);
-      });
-      onChange(publicUrl);
+      const url = await uploadFile(file, folder, setProgress);
+      onChange(url);
+      onUploaded?.(file, url);
     } catch (e) {
       setUploadError((e as Error).message);
     } finally {
@@ -68,8 +65,10 @@ export function MediaInput({
         ) : (
           <span className="grid size-full place-items-center text-muted">{kind === "video" ? <Video className="size-5" /> : <ImageIcon className="size-5" />}</span>
         )}
-        {progress !== null && (
-          <span className="absolute inset-0 grid place-items-center bg-black/55 text-xs font-bold text-white">{progress}%</span>
+        {(progress !== null || busyLabel) && (
+          <span className="absolute inset-0 grid place-items-center bg-black/55 p-1 text-center text-[10px] font-bold text-white">
+            {progress !== null ? `${progress}%` : busyLabel}
+          </span>
         )}
       </div>
       <div className="min-w-0 flex-1 space-y-2">

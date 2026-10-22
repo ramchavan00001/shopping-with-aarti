@@ -1,39 +1,70 @@
 import { useSyncExternalStore } from "react";
 
-// Saved reels, kept in this browser only (no login needed).
-const KEY = "saved-reels";
-const listeners = new Set<() => void>();
+// Saved looks and products, kept in this browser only (no login needed).
+// Newest first. Other open tabs stay in sync through the `storage` event.
 
-function read(): string[] {
-  try {
-    return JSON.parse(localStorage.getItem(KEY) ?? "[]");
-  } catch {
-    return [];
+function createSavedList(key: string, max = 200) {
+  const listeners = new Set<() => void>();
+
+  const read = (): string[] => {
+    try {
+      const v = JSON.parse(localStorage.getItem(key) ?? "[]");
+      return Array.isArray(v) ? v.filter((x) => typeof x === "string") : [];
+    } catch {
+      return [];
+    }
+  };
+
+  let snapshot = read();
+  const emit = () => listeners.forEach((l) => l());
+
+  function write(ids: string[]) {
+    snapshot = ids.slice(0, max);
+    try {
+      localStorage.setItem(key, JSON.stringify(snapshot));
+    } catch {
+      // Storage unavailable (private mode); keep in memory for this visit.
+    }
+    emit();
   }
-}
 
-let snapshot = read();
-
-function write(codes: string[]) {
-  snapshot = codes;
-  try {
-    localStorage.setItem(KEY, JSON.stringify(codes));
-  } catch {
-    // Storage unavailable (private mode); keep in memory for this visit.
+  if (typeof window !== "undefined") {
+    window.addEventListener("storage", (e) => {
+      if (e.key === key) {
+        snapshot = read();
+        emit();
+      }
+    });
   }
-  listeners.forEach((l) => l());
-}
 
-export function toggleSaved(code: string) {
-  write(snapshot.includes(code) ? snapshot.filter((c) => c !== code) : [code, ...snapshot]);
-}
-
-export function useSaved() {
-  return useSyncExternalStore(
-    (l) => {
-      listeners.add(l);
-      return () => listeners.delete(l);
+  return {
+    toggle(id: string) {
+      write(snapshot.includes(id) ? snapshot.filter((x) => x !== id) : [id, ...snapshot]);
+      return snapshot.includes(id);
     },
-    () => snapshot,
-  );
+    remove(ids: string[]) {
+      if (ids.some((id) => snapshot.includes(id))) write(snapshot.filter((x) => !ids.includes(x)));
+    },
+    clear: () => write([]),
+    useList: () =>
+      useSyncExternalStore(
+        (l) => {
+          listeners.add(l);
+          return () => listeners.delete(l);
+        },
+        () => snapshot,
+      ),
+  };
+}
+
+export const savedLooks = createSavedList("saved-reels");
+export const savedProducts = createSavedList("saved-products");
+
+// Shorthands for saved looks (reels), used across the site.
+export const toggleSaved = (code: string) => savedLooks.toggle(code);
+export const useSaved = () => savedLooks.useList();
+
+/** Total saved items, for nav badges. */
+export function useSavedCount() {
+  return savedLooks.useList().length + savedProducts.useList().length;
 }

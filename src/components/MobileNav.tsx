@@ -1,17 +1,17 @@
 import { Clapperboard, Flame, Heart, Home, Search } from "lucide-react";
 import { NavLink } from "react-router";
 import { cn } from "@/lib/format";
-import { useSaved } from "@/lib/saved";
+import { useSavedCount } from "@/lib/saved";
 
 // App-style bottom bar for phones, where most Instagram traffic lands.
 export function MobileNav() {
-  const saved = useSaved();
+  const savedCount = useSavedCount();
   const items = [
     { to: "/", label: "Home", icon: Home, end: true },
     { to: "/reels", label: "Reels", icon: Clapperboard },
     { to: "/search", label: "Search", icon: Search },
     { to: "/deals", label: "Deals", icon: Flame },
-    { to: "/reels?saved=1", label: "Saved", icon: Heart, badge: saved.length },
+    { to: "/saved", label: "Saved", icon: Heart, badge: savedCount },
   ];
   return (
     <nav

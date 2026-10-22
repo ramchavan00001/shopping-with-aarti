@@ -12,6 +12,7 @@ const Look = lazy(() => import("./pages/Look"));
 const Category = lazy(() => import("./pages/Category"));
 const Deals = lazy(() => import("./pages/Deals"));
 const About = lazy(() => import("./pages/About"));
+const Saved = lazy(() => import("./pages/Saved"));
 const AdminApp = lazy(() => import("./admin/AdminApp"));
 
 function ScrollManager() {
@@ -73,6 +74,7 @@ export default function App() {
           <Route path="category/:slug" element={<Category />} />
           <Route path="deals" element={<Deals />} />
           <Route path="about" element={<About />} />
+          <Route path="saved" element={<Saved />} />
           <Route path="*" element={<NotFound />} />
         </Route>
       </Routes>

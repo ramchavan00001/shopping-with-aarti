@@ -13,6 +13,7 @@ PostgreSQL ([Neon](https://neon.tech)) with [Drizzle ORM](https://orm.drizzle.te
 |---|---|---|
 | Home | `/` | Hero with live reel preview and instant search, stores, latest reels, categories, budget picks, trending (by real clicks), about |
 | Reels feed | `/reels` | Full-screen vertical feed, autoplay, save/share/mute, "Shop this look" drawer, desktop product panel |
+| Saved | `/saved` | Saved looks and products (hearts across the site), stored in the browser; no login |
 | Look page | `/look/a112-white-summer-dress-under-999` | Video, every product, WhatsApp share, similar looks. Server-rendered meta tags for link previews |
 | Category | `/category/dresses` | Filters (store, price, occasion, colour), sort, try-on reels strip |
 | Search | `/search?q=kurti` | Instant results; understands reel codes, spelling variants and "under 500" |
@@ -99,22 +100,40 @@ The demo reels (stock videos and search links) are there so the site isn't empty
 Delete them from the admin panel as real reels go in, or set `SEED_DEMO=false`
 before the very first deploy to start empty.
 
-### Uploading videos and photos (Cloudflare R2, optional)
+### Uploading videos and photos (Cloudflare R2)
 
-Without R2 you paste media URLs. To upload directly from the admin panel:
+Without R2 you paste media URLs. With it, the admin shows "Upload" buttons; files go
+straight from the browser to R2, and a reel uploaded without a cover gets one
+automatically (a frame from the video).
 
-1. Cloudflare dashboard → R2 → create a bucket (e.g. `aarti-media`).
-2. Bucket → Settings → **Public access**: connect a custom domain (e.g.
-   `media.shopwithaarti.in`) or enable the r2.dev URL. That URL is `MEDIA_BASE_URL`.
-3. Bucket → Settings → **CORS policy**: allow `PUT` from your site's origin, with
-   the `Content-Type` header:
+1. Cloudflare dashboard → **R2 object storage** → **Create bucket**, name
+   `aarti-media`, location **Automatic** (leave jurisdiction unset).
+2. Bucket → **Settings** → public access:
+   - **Custom Domains → Add** (recommended): e.g. `media.shopwithaarti.in`. The domain
+     must be added to the same Cloudflare account.
+   - or **Public Development URL → Enable** (`https://pub-….r2.dev`). Cloudflare
+     rate-limits this one and says it's for development only.
+
+   That public URL is `MEDIA_BASE_URL`.
+3. Bucket → **Settings** → **CORS Policy → Add CORS policy** → JSON tab:
    ```json
-   [{ "AllowedOrigins": ["https://shopwithaarti.in", "https://<your-service>.onrender.com"],
-      "AllowedMethods": ["PUT"], "AllowedHeaders": ["Content-Type"], "MaxAgeSeconds": 3600 }]
+   [
+     {
+       "AllowedOrigins": ["https://shopping-with-aarti.onrender.com"],
+       "AllowedMethods": ["PUT"],
+       "AllowedHeaders": ["Content-Type"],
+       "ExposeHeaders": ["ETag"],
+       "MaxAgeSeconds": 3600
+     }
+   ]
    ```
-4. R2 → **Manage API tokens** → create a token with Object Read & Write on the bucket.
-5. In Render, set `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`,
-   `R2_BUCKET` and `MEDIA_BASE_URL`, then redeploy. "Upload" buttons appear in the admin.
+   Add your custom site domain to `AllowedOrigins` too once you have one (no trailing slash).
+4. R2 **Overview** → **API Tokens: Manage** → **Create Account API token**, permission
+   **Object Read & Write**, applied to the `aarti-media` bucket only. Copy the
+   **Access Key ID** and **Secret Access Key** (shown once). The **Account ID** is on
+   the R2 Overview page.
+5. In Render → Environment, set `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`,
+   `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` and `MEDIA_BASE_URL`, then redeploy.
 
 ## Configuration
 
@@ -126,6 +145,7 @@ Without R2 you paste media URLs. To upload directly from the admin panel:
 | `SEED_DEMO` | No (default `true`) | Fill an empty database with demo content on first boot |
 | `MEDIA_BASE_URL` | For uploads | Public URL of the R2 bucket; relative media paths resolve against it |
 | `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET` | For uploads | Cloudflare R2 credentials |
+| `R2_JURISDICTION` | No | Only if the bucket was created in a jurisdiction (`eu` or `fedramp`) |
 | `ENQUIRY_WEBHOOK_URL` | No | Also POST brand enquiries as JSON to this URL |
 | `PORT` | No | Render sets it |
 
@@ -180,4 +200,4 @@ catalogue. The database and admin panel only run on the Render (Node) deployment
 
 - **Phase 2:** broken-link checker, Instagram auto-sync, WhatsApp channel signup,
   editable site settings (stats, links) in the admin panel, deeper analytics.
-- **Phase 3:** product-level wishlist with login, price-drop alerts, PWA.
+- **Phase 3:** shopper login to sync saved items across devices, price-drop alerts, PWA.

@@ -1,9 +1,10 @@
-import { ChevronDown, Moon, Sun } from "lucide-react";
+import { ChevronDown, Heart, Moon, Sun } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, NavLink, useLocation } from "react-router";
 import type { HomePayload } from "@shared/types";
 import { categoryPath } from "@shared/paths";
 import { useApi } from "@/lib/api";
+import { useSavedCount } from "@/lib/saved";
 import { site } from "@shared/site";
 import { cn } from "@/lib/format";
 import { useTheme } from "@/lib/theme";
@@ -71,6 +72,29 @@ function CategoriesMenu() {
   );
 }
 
+function SavedLink() {
+  const count = useSavedCount();
+  return (
+    <NavLink
+      to="/saved"
+      aria-label={`Saved items (${count})`}
+      className={({ isActive }) =>
+        cn(
+          "relative hidden size-10 place-items-center rounded-full border transition hover:border-accent hover:text-accent md:grid",
+          isActive ? "border-accent bg-accent-soft text-accent" : "border-line bg-surface text-ink",
+        )
+      }
+    >
+      <Heart className={cn("size-4", count > 0 && "fill-accent text-accent")} />
+      {count > 0 && (
+        <span className="absolute -right-1 -top-1 grid min-w-5 place-items-center rounded-full bg-accent px-1 text-[10px] font-bold leading-5 text-accent-ink">
+          {count}
+        </span>
+      )}
+    </NavLink>
+  );
+}
+
 export function ThemeToggle({ className }: { className?: string }) {
   const { dark, toggle } = useTheme();
   return (
@@ -113,6 +137,7 @@ export function Header() {
         </nav>
         <div className="ml-auto flex items-center gap-2">
           <SearchBox suggest className="hidden w-64 md:block xl:w-72" />
+          <SavedLink />
           <ThemeToggle />
           <a
             href={site.instagramUrl}

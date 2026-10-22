@@ -132,6 +132,13 @@ export function createApp(getSource: SourceResolver) {
     return c.json(repo.search(q, repoOpts(c), positive(c.req.query("limit")) ?? 8));
   });
 
+  app.get("/api/saved", async (c) => {
+    const list = (key: string) => (c.req.query(key) ?? "").split(",").map((s) => s.trim()).filter(Boolean).slice(0, 200);
+    const repo = await repoFor(c);
+    c.header("Cache-Control", "private, max-age=30");
+    return c.json(repo.getSaved(list("reels"), list("products"), repoOpts(c)));
+  });
+
   app.get("/api/deals", async (c) => {
     const repo = await repoFor(c);
     c.header("Cache-Control", "public, max-age=30");

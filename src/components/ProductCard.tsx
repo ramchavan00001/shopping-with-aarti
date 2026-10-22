@@ -2,6 +2,7 @@ import { ArrowUpRight, Quote } from "lucide-react";
 import type { PublicProduct } from "@shared/types";
 import { stores } from "@shared/stores";
 import { discountPct, formatPrice } from "@/lib/format";
+import { SaveProductButton } from "./SaveProductButton";
 import { StoreBadge } from "./StoreBadge";
 
 export function PriceLine({ product, invert = false }: { product: PublicProduct; invert?: boolean }) {
@@ -24,7 +25,7 @@ export function PriceLine({ product, invert = false }: { product: PublicProduct;
 
 export function ProductCard({ product }: { product: PublicProduct }) {
   return (
-    <article className="group flex flex-col overflow-hidden rounded-3xl border border-line bg-surface shadow-soft transition duration-300 hover:-translate-y-1 hover:shadow-lift">
+    <article className="group relative flex flex-col overflow-hidden rounded-3xl border border-line bg-surface shadow-soft transition duration-300 hover:-translate-y-1 hover:shadow-lift">
       <a href={product.href} target="_blank" rel="sponsored noopener" className="relative block aspect-[4/5] overflow-hidden bg-surface-2">
         <img
           src={product.image}
@@ -34,10 +35,11 @@ export function ProductCard({ product }: { product: PublicProduct }) {
           className="size-full object-cover transition duration-700 group-hover:scale-105"
         />
         <StoreBadge store={product.store} className="absolute left-3 top-3 shadow-sm" />
-        <span className="absolute right-3 top-3 rounded-full bg-black/40 px-2 py-1 text-[10px] font-bold text-white backdrop-blur">
+        <span className="absolute bottom-3 left-3 rounded-full bg-black/40 px-2 py-1 text-[10px] font-bold text-white backdrop-blur">
           #{product.reelCode}
         </span>
       </a>
+      <SaveProductButton id={product.id} title={product.title} className="absolute right-3 top-3 z-10" />
       <div className="flex flex-1 flex-col gap-2 p-4">
         <h3 className="line-clamp-2 text-sm font-semibold leading-snug">{product.title}</h3>
         <PriceLine product={product} />

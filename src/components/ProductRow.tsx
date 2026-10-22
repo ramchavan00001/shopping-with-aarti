@@ -3,6 +3,7 @@ import type { PublicProduct } from "@shared/types";
 import { stores } from "@shared/stores";
 import { cn } from "@/lib/format";
 import { PriceLine } from "./ProductCard";
+import { SaveProductButton } from "./SaveProductButton";
 import { StoreBadge } from "./StoreBadge";
 
 /** Compact product line used in the shop drawer, the desktop panel and look pages. */
@@ -26,17 +27,20 @@ export function ProductRow({ product, dark = false }: { product: PublicProduct; 
             <Ruler className="size-3 shrink-0" /> {product.sizeTip}
           </p>
         )}
+        <div className="mt-2.5 flex items-center gap-2">
         <a
-          href={product.href}
-          target="_blank"
-          rel="sponsored noopener"
-          className={cn(
-            "mt-2.5 inline-flex items-center justify-center gap-1 self-start rounded-full px-4 py-2 text-xs font-bold transition active:scale-95",
-            dark ? "bg-white text-neutral-900 hover:bg-accent hover:text-white" : "bg-ink text-bg hover:bg-accent hover:text-accent-ink",
-          )}
-        >
-          Buy on {stores[product.store].name} <ArrowUpRight className="size-3.5" />
-        </a>
+            href={product.href}
+            target="_blank"
+            rel="sponsored noopener"
+            className={cn(
+              "inline-flex items-center justify-center gap-1 self-start rounded-full px-4 py-2 text-xs font-bold transition active:scale-95",
+              dark ? "bg-white text-neutral-900 hover:bg-accent hover:text-white" : "bg-ink text-bg hover:bg-accent hover:text-accent-ink",
+            )}
+          >
+            Buy on {stores[product.store].name} <ArrowUpRight className="size-3.5" />
+          </a>
+          <SaveProductButton id={product.id} title={product.title} variant={dark ? "dark" : "inline"} className="size-8" />
+        </div>
       </div>
     </li>
   );

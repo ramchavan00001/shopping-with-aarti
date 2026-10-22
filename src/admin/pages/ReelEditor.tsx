@@ -9,6 +9,7 @@ import { cn } from "@/lib/format";
 import { adminApi, ApiError, useAdminQuery } from "../api";
 import { useAdminConfig } from "../context";
 import { MediaInput } from "../MediaInput";
+import { coverFromVideo, uploadFile } from "../upload";
 import { Button, Card, ErrorBanner, Field, PageHeader, Select, TextArea, TextInput, Toggle, useToast } from "../ui";
 
 // Form state keeps numbers as strings so inputs can be empty while typing.
@@ -104,7 +105,8 @@ export default function ReelEditor() {
   const isNew = !code;
   const navigate = useNavigate();
   const toast = useToast();
-  const { nextReelCode } = useAdminConfig();
+  const { nextReelCode, uploadsEnabled } = useAdminConfig();
+  const [coverStatus, setCoverStatus] = useState<string>();
   const existing = useAdminQuery<{ reel: AdminReel }>(isNew ? null : `/reels/${code}`);
   const cats = useAdminQuery<{ categories: AdminCategory[] }>("/categories");
 
@@ -245,6 +247,12 @@ export default function ReelEditor() {
         }
       />
 
+      {!uploadsEnabled && (
+        <p className="mb-5 rounded-xl border border-line bg-surface-2 px-4 py-3 text-sm text-muted">
+          Uploads aren't switched on yet, so paste links to the video and photos. Once Cloudflare R2 is connected, "Upload" buttons appear here.
+        </p>
+      )}
+
       {formError && (
         <div className="mb-5">
           <ErrorBanner message={productErrorCount ? `${formError} (${productErrorCount} in products)` : formError} />
@@ -257,12 +265,40 @@ export default function ReelEditor() {
             <div className="space-y-4">
               <Field label="Video" error={err("video")} hint="MP4, 9:16, ideally 720×1280." >
                 <div data-has-error={!!err("video")}>
-                  <MediaInput kind="video" folder="reels" value={form.video} onChange={(v) => set("video", v)} />
+                  <MediaInput
+                    kind="video"
+                    folder="reels"
+                    value={form.video}
+                    onChange={(v) => set("video", v)}
+                    onUploaded={async (file) => {
+                      // No cover yet? Use a frame from the uploaded video.
+                      if (form.poster) return;
+                      setCoverStatus("Creating cover…");
+                      try {
+                        const url = await uploadFile(await coverFromVideo(file), "posters");
+                        set("poster", url);
+                        setCoverStatus(undefined);
+                      } catch (e) {
+                        setCoverStatus(`Couldn't make a cover automatically (${(e as Error).message}). Upload one below.`);
+                      }
+                    }}
+                  />
                 </div>
               </Field>
-              <Field label="Cover image" error={err("poster")} hint="Shown before the video plays.">
+              <Field
+                label="Cover image"
+                error={err("poster")}
+                hint={coverStatus && !coverStatus.endsWith("…") ? coverStatus : uploadsEnabled ? "Shown before the video plays. Made automatically from the video if left empty." : "Shown before the video plays."}
+              >
                 <div data-has-error={!!err("poster")}>
-                  <MediaInput kind="image" folder="posters" aspect="aspect-[9/16]" value={form.poster} onChange={(v) => set("poster", v)} />
+                  <MediaInput
+                    kind="image"
+                    folder="posters"
+                    aspect="aspect-[9/16]"
+                    value={form.poster}
+                    onChange={(v) => set("poster", v)}
+                    busyLabel={coverStatus?.endsWith("…") ? coverStatus : undefined}
+                  />
                 </div>
               </Field>
             </div>

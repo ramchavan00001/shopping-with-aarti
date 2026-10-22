@@ -16,6 +16,7 @@ import {
   type PublicReel,
   type Reel,
   type SaleStatus,
+  type SavedPayload,
   type SearchPayload,
   type StoreId,
 } from "../shared/types";
@@ -369,7 +370,24 @@ export function createRepo(cat: Catalog) {
   const allReels = () => reels;
   const allCategories = () => categories;
 
-  return { listReels, getReel, getLook, listProducts, search, getDeals, getHome, getOutbound, allReels, allCategories };
+  /** Saved looks and products, in the order they were saved; missing ones are skipped. */
+  function getSaved(codes: string[], ids: string[], opts: RepoOptions): SavedPayload {
+    const reelByCode = new Map(reels.map((r) => [r.code, r]));
+    const productById = new Map(products.filter((p) => p.isActive).map((p) => [p.id, p]));
+    return {
+      reels: codes.flatMap((c) => {
+        const r = reelByCode.get(c.toUpperCase());
+        return r ? [toPublicReel(r, opts)] : [];
+      }),
+      products: ids.flatMap((id) => {
+        const p = productById.get(id);
+        const r = p && reelByCode.get(p.reelCode);
+        return p && r ? [{ ...toPublicProduct(p, opts), reelSlug: r.slug, reelTitle: r.title }] : [];
+      }),
+    };
+  }
+
+  return { listReels, getReel, getLook, listProducts, search, getDeals, getHome, getOutbound, getSaved, allReels, allCategories };
 }
 
 export type Repo = ReturnType<typeof createRepo>;

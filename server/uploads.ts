@@ -11,6 +11,8 @@ type UploadEnv = {
   R2_ACCESS_KEY_ID?: string;
   R2_SECRET_ACCESS_KEY?: string;
   R2_BUCKET?: string;
+  /** Only for buckets created in a jurisdiction: "eu" or "fedramp". */
+  R2_JURISDICTION?: string;
   MEDIA_BASE_URL?: string;
 };
 
@@ -39,8 +41,9 @@ export async function signUpload(c: Context, fileName: string, contentType: stri
   const month = new Date().toISOString().slice(0, 7);
   const key = `${safeFolder}/${month}/${base}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
 
-  const client = new AwsClient({ accessKeyId: e.R2_ACCESS_KEY_ID!, secretAccessKey: e.R2_SECRET_ACCESS_KEY!, service: "s3", region: "auto" });
-  const url = new URL(`https://${e.R2_ACCOUNT_ID}.r2.cloudflarestorage.com/${e.R2_BUCKET}/${key}`);
+  const client = new AwsClient({ accessKeyId: e.R2_ACCESS_KEY_ID!.trim(), secretAccessKey: e.R2_SECRET_ACCESS_KEY!.trim(), service: "s3", region: "auto" });
+  const jurisdiction = e.R2_JURISDICTION ? `.${e.R2_JURISDICTION.toLowerCase().replace(/[^a-z]/g, "")}` : "";
+  const url = new URL(`https://${e.R2_ACCOUNT_ID!.trim()}${jurisdiction}.r2.cloudflarestorage.com/${e.R2_BUCKET!.trim()}/${key}`);
   url.searchParams.set("X-Amz-Expires", "900");
   const signed = await client.sign(new Request(url, { method: "PUT", headers: { "Content-Type": contentType } }), {
     aws: { signQuery: true },

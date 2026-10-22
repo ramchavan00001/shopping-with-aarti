@@ -95,6 +95,14 @@ export interface LookPayload {
   similar: PublicReel[];
 }
 
+/** A saved product plus enough of its reel to link back to the look. */
+export type SavedProduct = PublicProduct & { reelSlug: string; reelTitle: string };
+
+export interface SavedPayload {
+  reels: PublicReel[];
+  products: SavedProduct[];
+}
+
 export interface SearchPayload {
   query: string;
   reels: PublicReel[];
