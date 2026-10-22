@@ -46,8 +46,9 @@ export interface ProductQuery {
   sort?: ProductSort;
 }
 
+/** Absolute URLs and site paths ("/images/…") pass through; bare paths resolve against MEDIA_BASE_URL (R2). */
 function media(path: string, base?: string) {
-  if (/^https?:\/\//.test(path) || !base) return path;
+  if (/^https?:\/\//.test(path) || path.startsWith("/") || !base) return path;
   return `${base.replace(/\/$/, "")}/${path.replace(/^\//, "")}`;
 }
 

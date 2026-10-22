@@ -6,9 +6,9 @@ export const site = {
   instagramUrl: "https://www.instagram.com/shopping.with.aartii/",
   whatsappChannelUrl: "#whatsapp", // TODO: WhatsApp channel invite link
   email: "collab@shopwithaarti.in", // TODO: real enquiry address
-  // TODO: replace with Aarti's own photos (upload to R2).
-  heroPortrait: "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=900&q=70",
-  aboutPortrait: "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?auto=format&fit=crop&w=900&q=70",
+  // Aarti's photos, served from public/images/aarti.
+  heroPortrait: "/images/aarti/hero.webp",
+  aboutPortrait: "/images/aarti/about.webp",
   stats: [
     { value: "50K+", label: "shoppers" }, // TODO: real follower count
     { value: "300+", label: "try-on reels" },

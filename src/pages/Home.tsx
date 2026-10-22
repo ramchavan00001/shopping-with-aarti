@@ -152,7 +152,7 @@ function HeroVisual({ featured }: { featured?: PublicReel }) {
     >
       {/* arch portrait */}
       <div className="absolute left-0 top-6 h-[78%] w-[62%] overflow-hidden rounded-t-full rounded-b-[2rem] border-4 border-surface shadow-lift">
-        <img src={site.heroPortrait} alt="Aarti holding shopping bags" className="size-full object-cover" fetchPriority="high" />
+        <img src={site.heroPortrait} alt="Aarti with a tote bag on her shoulder" className="size-full object-cover" fetchPriority="high" />
       </div>
 
       {/* phone with the featured reel */}

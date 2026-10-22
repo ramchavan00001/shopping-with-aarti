@@ -20,12 +20,12 @@ const search = {
 
 export const categories: Category[] = [
   { slug: "dresses", name: "Dresses", image: unsplash("1595777457583-95e059d581b8"), blurb: "Maxi, midi & mini" },
-  { slug: "ethnic", name: "Kurtis & Ethnic", image: unsplash("1583391733956-3750e0ff4e8b"), blurb: "Everyday to festive" },
+  { slug: "ethnic", name: "Kurtis & Ethnic", image: "/images/aarti/cat-ethnic.webp", blurb: "Everyday to festive" },
   { slug: "sarees", name: "Sarees", image: unsplash("1617627143750-d86bc21e42bb"), blurb: "Silk, georgette & more" },
-  { slug: "western", name: "Western & Co-ords", image: unsplash("1515886657613-9f3515b0c78f"), blurb: "Sets, tops & bottoms" },
+  { slug: "western", name: "Western & Co-ords", image: "/images/aarti/cat-western.webp", blurb: "Sets, tops & bottoms" },
   { slug: "footwear", name: "Footwear", image: unsplash("1543163521-1bf539c55dd2"), blurb: "Heels, flats & sneakers" },
   { slug: "jewellery", name: "Jewellery", image: unsplash("1535632066927-ab7c9ab60908"), blurb: "Earrings to layering" },
-  { slug: "bags", name: "Bags", image: unsplash("1584917865442-de89df76afd3"), blurb: "Totes, slings & clutches" },
+  { slug: "bags", name: "Bags", image: "/images/aarti/cat-bags.webp", blurb: "Totes, slings & clutches" },
   { slug: "beauty", name: "Beauty", image: unsplash("1596462502278-27bfdc403348"), blurb: "Makeup under ₹500" },
 ];
 

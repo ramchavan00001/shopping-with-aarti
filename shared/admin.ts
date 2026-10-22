@@ -12,7 +12,7 @@ const mediaRef = z
   .trim()
   .min(1, "Required")
   .max(1000)
-  .refine((v) => /^https?:\/\//.test(v) || /^[\w./-]+$/.test(v), "Use a full https:// URL or an uploaded file path");
+  .refine((v) => /^https?:\/\//.test(v) || /^[\w./-]+$/.test(v), "Use a full https:// URL, an uploaded file path, or a site path like /images/…");
 const httpUrl = z.string().trim().url("Enter a full link starting with https://").max(2000);
 const optionalText = (max: number) =>
   z

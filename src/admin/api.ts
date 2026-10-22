@@ -47,4 +47,4 @@ export function useAdminQuery<T>(path: string | null) {
 }
 
 export const resolveMedia = (path: string, base?: string | null) =>
-  !path || /^https?:\/\//.test(path) || !base ? path : `${base.replace(/\/$/, "")}/${path.replace(/^\//, "")}`;
+  !path || /^https?:\/\//.test(path) || path.startsWith("/") || !base ? path : `${base.replace(/\/$/, "")}/${path.replace(/^\//, "")}`;

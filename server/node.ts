@@ -50,6 +50,10 @@ app.use(
   },
   serveStatic({ root: "./dist" }),
 );
+app.use("/images/*", async (c, next) => {
+  await next();
+  c.header("Cache-Control", "public, max-age=86400");
+});
 // Look pages get reel-specific meta tags for link previews and SEO.
 app.get("/look/*", async (c) => {
   const repo = await repoFor(c);
