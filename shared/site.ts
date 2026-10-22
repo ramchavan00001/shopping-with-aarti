@@ -9,6 +9,7 @@ export const site = {
   // Aarti's photos, served from public/images/aarti.
   heroPortrait: "/images/aarti/hero.webp",
   aboutPortrait: "/images/aarti/about.webp",
+  meetPortrait: "/images/aarti/meet.webp", // home page "Meet Aarti"
   stats: [
     { value: "50K+", label: "shoppers" }, // TODO: real follower count
     { value: "300+", label: "try-on reels" },

@@ -332,9 +332,9 @@ function Categories({ categories }: { categories?: HomePayload["categories"] }) 
 /* ---------------------------------------------------------- Budget picks -- */
 
 const budgets = [
-  { max: 299, label: "Under ₹299", sub: "Jewellery, beauty & accessories", tone: "from-[#F6D5C5] to-[#F3B7AE] text-[#5A2318]" },
-  { max: 499, label: "Under ₹499", sub: "Tops, kurtis & everyday wear", tone: "from-[#E9D3F0] to-[#C9A7DD] text-[#3C1B4F]" },
-  { max: 999, label: "Under ₹999", sub: "Dresses, co-ords & footwear", tone: "from-[#F4E3B5] to-[#E3C37A] text-[#4A3610]" },
+  { max: 299, label: "Under ₹299", sub: "Tops, jewellery & accessories", tone: "from-[#F6D5C5] to-[#F3B7AE] text-[#5A2318]", image: "/images/aarti/budget-299.webp" },
+  { max: 499, label: "Under ₹499", sub: "Short kurtis & everyday wear", tone: "from-[#E9D3F0] to-[#C9A7DD] text-[#3C1B4F]", image: "/images/aarti/budget-499.webp" },
+  { max: 999, label: "Under ₹999", sub: "Kurta sets, dresses & co-ords", tone: "from-[#F4E3B5] to-[#E3C37A] text-[#4A3610]", image: "/images/aarti/budget-999.webp" },
 ];
 
 function BudgetPicks() {
@@ -346,12 +346,18 @@ function BudgetPicks() {
           <Reveal key={b.max} delay={i * 0.08}>
             <Link
               to={`/reels?maxPrice=${b.max}`}
-              className={`group relative flex h-44 flex-col justify-between overflow-hidden rounded-3xl bg-gradient-to-br p-6 shadow-soft transition hover:-translate-y-1 hover:shadow-lift ${b.tone}`}
+              className={`group relative flex h-48 flex-col justify-between overflow-hidden rounded-3xl bg-gradient-to-br p-6 shadow-soft transition hover:-translate-y-1 hover:shadow-lift ${b.tone}`}
             >
-              <span aria-hidden className="absolute -right-6 -top-10 font-display text-[9rem] font-bold leading-none opacity-15">₹</span>
-              <span className="text-xs font-semibold uppercase tracking-[0.2em] opacity-75">Budget picks</span>
-              <span>
-                <span className="block font-display text-4xl font-semibold">{b.label}</span>
+              {/* Aarti in an outfit from this budget, fading into the card colour */}
+              <img
+                src={b.image}
+                alt=""
+                loading="lazy"
+                className="absolute inset-y-0 right-0 h-full w-[38%] object-cover object-top transition duration-700 [mask-image:linear-gradient(to_right,transparent,black_30%)] group-hover:scale-105"
+              />
+              <span className="relative text-xs font-semibold uppercase tracking-[0.2em] opacity-75">Budget picks</span>
+              <span className="relative max-w-[60%]">
+                <span className="block font-display text-4xl font-semibold md:text-3xl xl:text-[2.1rem]">{b.label}</span>
                 <span className="mt-1 flex items-center gap-1.5 text-sm font-medium opacity-80">
                   {b.sub} <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
                 </span>
@@ -432,7 +438,7 @@ function About() {
       <div className="grid items-center gap-10 md:grid-cols-[0.9fr_1.1fr] lg:gap-16">
         <Reveal className="relative mx-auto w-full max-w-sm">
           <div className="aspect-[4/5] overflow-hidden rounded-[2rem] shadow-lift">
-            <img src={site.aboutPortrait} alt="Aarti" loading="lazy" className="size-full object-cover" />
+            <img src={site.meetPortrait} alt="Aarti" loading="lazy" className="size-full object-cover object-top" />
           </div>
           <div className="absolute -bottom-5 -right-3 rounded-2xl border border-line bg-surface px-4 py-3 shadow-lift sm:-right-8">
             <p className="font-display text-2xl font-semibold">{site.stats[0].value}</p>
