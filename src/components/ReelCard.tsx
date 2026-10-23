@@ -4,10 +4,13 @@ import { Link } from "react-router";
 import type { PublicReel } from "@shared/types";
 import { formatCount } from "@/lib/format";
 import { StoreDots } from "./StoreBadge";
+import { responsive } from "@/lib/img";
+import { useT } from "@/lib/i18n";
 
 /** 9:16 reel tile. On hover-capable devices the reel previews muted. */
 /** `to` defaults to the full-screen feed; pass a look page path to link there instead. */
 export function ReelCard({ reel, priority = false, to }: { reel: PublicReel; priority?: boolean; to?: string }) {
+  const t = useT();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [previewing, setPreviewing] = useState(false);
 
@@ -31,8 +34,9 @@ export function ReelCard({ reel, priority = false, to }: { reel: PublicReel; pri
       className="group relative block aspect-[9/16] overflow-hidden rounded-3xl bg-surface-2 shadow-soft transition duration-300 hover:-translate-y-1 hover:shadow-lift"
     >
       <img
-        src={reel.poster}
+        {...responsive(reel.poster, "(min-width: 1024px) 20vw, (min-width: 640px) 33vw, 50vw", 640)}
         alt=""
+        fetchPriority={priority ? "high" : undefined}
         loading={priority ? "eager" : "lazy"}
         decoding="async"
         className="absolute inset-0 size-full object-cover transition duration-700 group-hover:scale-105"
@@ -67,7 +71,7 @@ export function ReelCard({ reel, priority = false, to }: { reel: PublicReel; pri
         <h3 className="line-clamp-2 font-display text-lg font-medium leading-snug">{reel.title}</h3>
         <div className="mt-3 flex items-center justify-between">
           <span className="flex items-center gap-1.5 text-xs font-semibold">
-            <ShoppingBag className="size-3.5" /> Shop {reel.products.length} items
+            <ShoppingBag className="size-3.5" /> {t("Shop {n} items", { n: reel.products.length })}
           </span>
           <StoreDots ids={reel.products.map((p) => p.store)} />
         </div>

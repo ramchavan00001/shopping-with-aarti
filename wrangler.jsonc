@@ -1,6 +1,6 @@
 // Cloudflare Workers config (optional preview target). Static files in ./dist
 // are served by Workers Static Assets; only the run_worker_first paths reach
-// the Worker code. The Worker serves the demo catalogue read-only: the
+// the Worker code (/img only redirects to the original image there). The Worker serves the demo catalogue read-only: the
 // database and /admin run on the Node deployment (Render).
 {
   "$schema": "node_modules/wrangler/config-schema.json",
@@ -11,7 +11,7 @@
     "binding": "ASSETS",
     "directory": "./dist",
     "not_found_handling": "single-page-application",
-    "run_worker_first": ["/api/*", "/go/*", "/look/*", "/sitemap.xml"]
+    "run_worker_first": ["/api/*", "/go/*", "/look/*", "/img", "/sitemap.xml"]
   },
   "vars": {
     // Public base URL of the R2 bucket (or custom domain) holding reel videos

@@ -29,6 +29,13 @@
       "when": 1792694565190,
       "tag": "0003_phase2_ops",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792697060429,
+      "tag": "0004_phase3_push",
+      "breakpoints": true
     }
   ]
 }

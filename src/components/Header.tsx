@@ -8,10 +8,13 @@ import { useSavedCount } from "@/lib/saved";
 import { useSettings } from "@/lib/settings";
 import { cn } from "@/lib/format";
 import { useTheme } from "@/lib/theme";
+import { useLang, useT } from "@/lib/i18n";
 import { InstagramIcon } from "./icons";
 import { Logo } from "./Logo";
 import { SearchBox } from "./SearchBox";
+import { imgUrl } from "@/lib/img";
 
+// Labels are translated where they're shown.
 const nav = [
   { to: "/", label: "Home", end: true },
   { to: "/reels", label: "Shop Reels" },
@@ -20,6 +23,7 @@ const nav = [
 ];
 
 function NavItem({ to, label, end }: { to: string; label: string; end?: boolean }) {
+  const t = useT();
   return (
     <NavLink
       to={to}
@@ -28,13 +32,14 @@ function NavItem({ to, label, end }: { to: string; label: string; end?: boolean 
         cn("rounded-full px-3.5 py-2 text-sm font-medium transition", isActive ? "bg-accent-soft text-accent" : "text-ink/75 hover:text-ink")
       }
     >
-      {label}
+      {t(label)}
     </NavLink>
   );
 }
 
 /** Hover/click dropdown listing every category with its photo. */
 function CategoriesMenu() {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const { pathname } = useLocation();
   const { data } = useApi<HomePayload>("/api/home");
@@ -51,17 +56,17 @@ function CategoriesMenu() {
           active ? "bg-accent-soft text-accent" : "text-ink/75 hover:text-ink",
         )}
       >
-        Categories <ChevronDown className={cn("size-4 transition", open && "rotate-180")} />
+        {t("Categories")} <ChevronDown className={cn("size-4 transition", open && "rotate-180")} />
       </button>
       {open && data && (
         <div className="absolute left-0 top-full z-50 pt-2">
           <div className="grid w-[30rem] grid-cols-2 gap-1 rounded-2xl border border-line bg-surface p-2 shadow-lift">
             {data.categories.map((c) => (
               <Link key={c.slug} to={categoryPath(c.slug)} className="flex items-center gap-3 rounded-xl p-2 transition hover:bg-surface-2">
-                <img src={c.image} alt="" className="size-11 rounded-lg object-cover" />
+                <img src={imgUrl(c.image, 160)} alt="" className="size-11 rounded-lg object-cover" />
                 <span>
-                  <span className="block text-sm font-semibold">{c.name}</span>
-                  <span className="block text-xs text-muted">{c.blurb}</span>
+                  <span className="block text-sm font-semibold">{t(c.name)}</span>
+                  <span className="block text-xs text-muted">{t(c.blurb)}</span>
                 </span>
               </Link>
             ))}
@@ -73,11 +78,12 @@ function CategoriesMenu() {
 }
 
 function SavedLink() {
+  const t = useT();
   const count = useSavedCount();
   return (
     <NavLink
       to="/saved"
-      aria-label={`Saved items (${count})`}
+      aria-label={t("Saved items ({n})", { n: count })}
       className={({ isActive }) =>
         cn(
           "relative hidden size-10 place-items-center rounded-full border transition hover:border-accent hover:text-accent md:grid",
@@ -95,12 +101,30 @@ function SavedLink() {
   );
 }
 
+/** Switches between English and Hindi; shows the language you'd switch to. */
+export function LanguageToggle({ className }: { className?: string }) {
+  const { lang, setLang, t } = useLang();
+  const next = lang === "hi" ? "en" : "hi";
+  return (
+    <button
+      onClick={() => setLang(next)}
+      aria-label={t("Change language")}
+      title={next === "hi" ? "हिन्दी में देखें" : "View in English"}
+      lang={next === "hi" ? "hi" : "en"}
+      className={cn("grid h-10 min-w-10 place-items-center rounded-full border border-line bg-surface px-2.5 text-sm font-semibold text-ink transition hover:border-accent hover:text-accent", className)}
+    >
+      {next === "hi" ? "हिं" : "EN"}
+    </button>
+  );
+}
+
 export function ThemeToggle({ className }: { className?: string }) {
+  const t = useT();
   const { dark, toggle } = useTheme();
   return (
     <button
       onClick={toggle}
-      aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
+      aria-label={dark ? t("Switch to light mode") : t("Switch to dark mode")}
       className={cn("grid size-10 place-items-center rounded-full border border-line bg-surface text-ink transition hover:border-accent hover:text-accent", className)}
     >
       {dark ? <Sun className="size-4" /> : <Moon className="size-4" />}
@@ -109,6 +133,7 @@ export function ThemeToggle({ className }: { className?: string }) {
 }
 
 export function Header() {
+  const t = useT();
   const s = useSettings();
   const [scrolled, setScrolled] = useState(false);
   useEffect(() => {
@@ -127,7 +152,7 @@ export function Header() {
     >
       <div className="container-page flex h-16 items-center gap-4 lg:h-20">
         <Logo />
-        <nav aria-label="Main" className="ml-6 hidden items-center gap-1 lg:flex">
+        <nav aria-label={t("Main")} className="ml-6 hidden items-center gap-1 lg:flex">
           {nav.slice(0, 2).map((item) => (
             <NavItem key={item.label} {...item} />
           ))}
@@ -139,6 +164,7 @@ export function Header() {
         <div className="ml-auto flex items-center gap-2">
           <SearchBox suggest className="hidden w-64 md:block xl:w-72" />
           <SavedLink />
+          <LanguageToggle />
           <ThemeToggle />
           <a
             href={s.instagramUrl}
@@ -146,7 +172,7 @@ export function Header() {
             rel="noopener"
             className="hidden items-center gap-2 rounded-full bg-gradient-to-tr from-[#F58529] via-[#DD2A7B] to-[#8134AF] px-4 py-2.5 text-sm font-semibold text-white shadow-soft transition hover:brightness-110 sm:flex"
           >
-            <InstagramIcon className="size-4" /> Follow
+            <InstagramIcon className="size-4" /> {t("Follow")}
           </a>
         </div>
       </div>

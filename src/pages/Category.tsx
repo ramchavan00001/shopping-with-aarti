@@ -11,6 +11,8 @@ import { usePageMeta } from "@/lib/meta";
 import { ProductCard, ProductCardSkeleton } from "@/components/ProductCard";
 import { ReelCard } from "@/components/ReelCard";
 import NotFound from "./NotFound";
+import { imgUrl, responsive } from "@/lib/img";
+import { useT } from "@/lib/i18n";
 
 const priceBands = [299, 499, 999, 1499];
 const sorts: { id: ProductSort; label: string }[] = [
@@ -24,6 +26,7 @@ const FILTER_KEYS = ["store", "maxPrice", "occasion", "colour"] as const;
 const titleCase = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 export default function Category() {
+  const t = useT();
   const { slug = "" } = useParams();
   const [params, setParams] = useSearchParams();
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -41,7 +44,10 @@ export default function Category() {
   const { data: home } = useApi<HomePayload>("/api/home");
   const category = data?.category;
 
-  usePageMeta(category && `${category.name} · Tried-on finds`, category && `${category.blurb}. Shop ${category.name.toLowerCase()} Aarti has tried on, from Amazon, Flipkart, Meesho and Myntra.`);
+  usePageMeta(
+    category && t("{name} · Tried-on finds", { name: t(category.name) }),
+    category && t("{blurb}. Shop {name} Aarti has tried on, from Amazon, Flipkart, Meesho and Myntra.", { blurb: t(category.blurb), name: t(category.name).toLowerCase() }),
+  );
 
   useEffect(() => setSheetOpen(false), [slug]);
 
@@ -69,21 +75,21 @@ export default function Category() {
       {/* banner */}
       <section className="container-page pt-4 sm:pt-6">
         <div className="relative overflow-hidden rounded-[2rem] bg-surface-2">
-          {category && <img src={category.image} alt="" className="absolute inset-0 size-full object-cover" />}
+          {category && <img {...responsive(category.image, "100vw")} alt="" className="absolute inset-0 size-full object-cover" />}
           <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/45 to-black/10" />
           <div className="relative px-6 py-10 text-white sm:px-10 sm:py-14">
-            <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-xs text-white/75">
-              <Link to="/" className="hover:text-white">Home</Link>
+            <nav aria-label={t("Breadcrumb")} className="flex items-center gap-1 text-xs text-white/75">
+              <Link to="/" className="hover:text-white">{t("Home")}</Link>
               <ChevronRight className="size-3.5" />
-              <span>Categories</span>
+              <span>{t("Categories")}</span>
             </nav>
-            <h1 className="mt-3 font-display text-4xl font-semibold tracking-tight sm:text-5xl">{category?.name ?? " "}</h1>
+            <h1 className="mt-3 font-display text-4xl font-semibold tracking-tight sm:text-5xl">{category ? t(category.name) : " "}</h1>
             <p className="mt-2 max-w-md text-sm text-white/80 sm:text-base">
-              {category ? `${category.blurb}. Every piece tried on by Aarti, with honest notes and size tips.` : " "}
+              {category ? t("{blurb}. Every piece tried on by Aarti, with honest notes and size tips.", { blurb: t(category.blurb) }) : " "}
             </p>
             {data && (
               <p className="mt-5 inline-flex rounded-full bg-white/15 px-3 py-1.5 text-xs font-semibold backdrop-blur">
-                {data.facets.stores.reduce((n, s) => n + s.count, 0)} products · {data.reels?.length ?? 0} reels
+                {t("{p} products · {r} reels", { p: data.facets.stores.reduce((n, s) => n + s.count, 0), r: data.reels?.length ?? 0 })}
               </p>
             )}
           </div>
@@ -91,7 +97,7 @@ export default function Category() {
       </section>
 
       {/* category switcher */}
-      <nav aria-label="Categories" className="no-scrollbar container-page mt-5 flex gap-2 overflow-x-auto">
+      <nav aria-label={t("Categories")} className="no-scrollbar container-page mt-5 flex gap-2 overflow-x-auto">
         {home?.categories.map((c) => (
           <Link
             key={c.slug}
@@ -101,8 +107,8 @@ export default function Category() {
               c.slug === slug ? "border-accent bg-accent-soft text-accent" : "border-line bg-surface hover:border-accent",
             )}
           >
-            <img src={c.image} alt="" className="size-7 rounded-full object-cover" />
-            {c.name}
+            <img src={imgUrl(c.image, 160)} alt="" className="size-7 rounded-full object-cover" />
+            {t(c.name)}
           </Link>
         ))}
       </nav>
@@ -111,8 +117,8 @@ export default function Category() {
       {!!data?.reels?.length && (
         <section className="mt-10">
           <div className="container-page flex items-end justify-between">
-            <h2 className="font-display text-2xl font-semibold">Watch the try-ons</h2>
-            <Link to={`/reels?category=${slug}`} className="text-sm font-semibold text-accent">Play all</Link>
+            <h2 className="font-display text-2xl font-semibold">{t("Watch the try-ons")}</h2>
+            <Link to={`/reels?category=${slug}`} className="text-sm font-semibold text-accent">{t("Play all")}</Link>
           </div>
           <div className="no-scrollbar mt-4 flex snap-x gap-3 overflow-x-auto scroll-px-4 px-4 pb-2 sm:scroll-px-6 sm:px-6 lg:scroll-px-[max(2rem,calc((100vw-80rem)/2+2rem))] lg:px-[max(2rem,calc((100vw-80rem)/2+2rem))]">
             {data.reels.map((r) => (
@@ -129,8 +135,8 @@ export default function Category() {
         <aside className="hidden lg:block">
           <div className="sticky top-24">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-sm font-semibold">Filters</h2>
-              {activeCount > 0 && <button onClick={clearAll} className="text-xs font-semibold text-accent">Clear all</button>}
+              <h2 className="text-sm font-semibold">{t("Filters")}</h2>
+              {activeCount > 0 && <button onClick={clearAll} className="text-xs font-semibold text-accent">{t("Clear all")}</button>}
             </div>
             {filterPanel}
           </div>
@@ -142,20 +148,20 @@ export default function Category() {
               onClick={() => setSheetOpen(true)}
               className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-4 py-2 text-sm font-semibold lg:hidden"
             >
-              <SlidersHorizontal className="size-4" /> Filters
+              <SlidersHorizontal className="size-4" /> {t("Filters")}
               {activeCount > 0 && <span className="grid size-5 place-items-center rounded-full bg-accent text-[10px] text-accent-ink">{activeCount}</span>}
             </button>
             <p className="text-sm text-muted">
-              {data ? `${data.total} ${data.total === 1 ? "product" : "products"}` : "Loading…"}
+              {data ? t(data.total === 1 ? "{n} product" : "{n} products", { n: data.total }) : t("Loading…")}
             </p>
             <label className="ml-auto flex items-center gap-2 text-sm">
-              <span className="hidden text-muted sm:inline">Sort</span>
+              <span className="hidden text-muted sm:inline">{t("Sort")}</span>
               <select
                 value={params.get("sort") ?? "popular"}
                 onChange={(e) => setParam("sort", e.target.value === "popular" ? undefined : e.target.value)}
                 className="rounded-full border border-line bg-surface px-3 py-2 text-sm font-medium outline-none focus:border-accent"
               >
-                {sorts.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
+                {sorts.map((s) => <option key={s.id} value={s.id}>{t(s.label)}</option>)}
               </select>
             </label>
           </div>
@@ -164,9 +170,9 @@ export default function Category() {
 
           {data && data.total === 0 ? (
             <div className="rounded-3xl border border-dashed border-line px-6 py-16 text-center">
-              <p className="font-display text-2xl font-semibold">Nothing matches those filters</p>
-              <p className="mt-2 text-sm text-muted">Try removing a filter or two.</p>
-              <button onClick={clearAll} className="mt-5 rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-accent-ink">Clear filters</button>
+              <p className="font-display text-2xl font-semibold">{t("Nothing matches those filters")}</p>
+              <p className="mt-2 text-sm text-muted">{t("Try removing a filter or two.")}</p>
+              <button onClick={clearAll} className="mt-5 rounded-full bg-accent px-5 py-2.5 text-sm font-semibold text-accent-ink">{t("Clear filters")}</button>
             </div>
           ) : (
             <div className={cn("grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3", loading && data && "opacity-60 transition-opacity")}>
@@ -186,7 +192,7 @@ export default function Category() {
             <motion.div
               role="dialog"
               aria-modal="true"
-              aria-label="Filters"
+              aria-label={t("Filters")}
               initial={{ y: "100%" }}
               animate={{ y: 0 }}
               exit={{ y: "100%" }}
@@ -194,16 +200,16 @@ export default function Category() {
               className="fixed inset-x-0 bottom-0 z-50 flex max-h-[85dvh] flex-col rounded-t-[1.75rem] bg-bg"
             >
               <div className="flex items-center justify-between border-b border-line px-5 py-4">
-                <h2 className="font-display text-xl font-semibold">Filters</h2>
-                <button onClick={() => setSheetOpen(false)} aria-label="Close" className="grid size-9 place-items-center rounded-full bg-surface-2">
+                <h2 className="font-display text-xl font-semibold">{t("Filters")}</h2>
+                <button onClick={() => setSheetOpen(false)} aria-label={t("Close")} className="grid size-9 place-items-center rounded-full bg-surface-2">
                   <X className="size-4" />
                 </button>
               </div>
               <div className="flex-1 overflow-y-auto px-5 py-5">{filterPanel}</div>
               <div className="flex gap-3 border-t border-line px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-                <button onClick={clearAll} className="flex-1 rounded-full border border-line py-3 text-sm font-semibold">Clear all</button>
+                <button onClick={clearAll} className="flex-1 rounded-full border border-line py-3 text-sm font-semibold">{t("Clear all")}</button>
                 <button onClick={() => setSheetOpen(false)} className="flex-[2] rounded-full bg-accent py-3 text-sm font-semibold text-accent-ink">
-                  Show {data?.total ?? ""} products
+                  {t("Show {n} products", { n: data?.total ?? "" })}
                 </button>
               </div>
             </motion.div>
@@ -240,10 +246,11 @@ function OptionChip({ active, onClick, children }: { active: boolean; onClick: (
 }
 
 function FilterPanel({ data, params, onChange }: { data: ProductsPayload; params: URLSearchParams; onChange: (key: string, value?: string) => void }) {
+  const t = useT();
   const { facets } = data;
   return (
     <div>
-      <FilterGroup title="Store">
+      <FilterGroup title={t("Store")}>
         <div className="flex flex-wrap gap-2">
           {facets.stores.map(({ id, count }) => (
             <OptionChip key={id} active={params.get("store") === id} onClick={() => onChange("store", id)}>
@@ -253,28 +260,28 @@ function FilterPanel({ data, params, onChange }: { data: ProductsPayload; params
           ))}
         </div>
       </FilterGroup>
-      <FilterGroup title="Price">
+      <FilterGroup title={t("Price")}>
         <div className="flex flex-wrap gap-2">
           {priceBands.map((p) => (
             <OptionChip key={p} active={params.get("maxPrice") === String(p)} onClick={() => onChange("maxPrice", String(p))}>
-              Under ₹{p.toLocaleString("en-IN")}
+              {t("Under ₹{n}", { n: p.toLocaleString("en-IN") })}
             </OptionChip>
           ))}
         </div>
       </FilterGroup>
       {facets.occasions.length > 0 && (
-        <FilterGroup title="Occasion">
+        <FilterGroup title={t("Occasion")}>
           <div className="flex flex-wrap gap-2">
             {facets.occasions.map(({ id, count }) => (
               <OptionChip key={id} active={params.get("occasion") === id} onClick={() => onChange("occasion", id)}>
-                {titleCase(id)} <span className="text-xs opacity-60">{count}</span>
+                {t(titleCase(id))} <span className="text-xs opacity-60">{count}</span>
               </OptionChip>
             ))}
           </div>
         </FilterGroup>
       )}
       {facets.colours.length > 0 && (
-        <FilterGroup title="Colour">
+        <FilterGroup title={t("Colour")}>
           <div className="flex flex-wrap gap-2.5">
             {facets.colours.map(({ id }) => {
               const active = params.get("colour") === id;
@@ -283,8 +290,8 @@ function FilterPanel({ data, params, onChange }: { data: ProductsPayload; params
                   key={id}
                   onClick={() => onChange("colour", id)}
                   aria-pressed={active}
-                  aria-label={titleCase(id)}
-                  title={titleCase(id)}
+                  aria-label={t(titleCase(id))}
+                  title={t(titleCase(id))}
                   className={cn(
                     "grid size-9 place-items-center rounded-full ring-1 ring-black/10 transition hover:scale-110",
                     active && "ring-2 ring-accent ring-offset-2 ring-offset-bg",
@@ -303,13 +310,14 @@ function FilterPanel({ data, params, onChange }: { data: ProductsPayload; params
 }
 
 function ActiveFilters({ params, onRemove, onClear }: { params: URLSearchParams; onRemove: (key: string) => void; onClear: () => void }) {
+  const t = useT();
   const items = FILTER_KEYS.flatMap((k) => {
     const v = params.get(k);
     if (!v) return [];
     const label =
       k === "store" ? stores[v as StoreId]?.name ?? v
-      : k === "maxPrice" ? `Under ₹${Number(v).toLocaleString("en-IN")}`
-      : titleCase(v as Occasion | Colour);
+      : k === "maxPrice" ? t("Under ₹{n}", { n: Number(v).toLocaleString("en-IN") })
+      : t(titleCase(v as Occasion | Colour));
     return [{ k, label }];
   });
   if (!items.length) return null;
@@ -320,7 +328,7 @@ function ActiveFilters({ params, onRemove, onClear }: { params: URLSearchParams;
           {label} <X className="size-3.5" />
         </button>
       ))}
-      <button onClick={onClear} className="text-xs font-semibold text-accent">Clear all</button>
+      <button onClick={onClear} className="text-xs font-semibold text-accent">{t("Clear all")}</button>
     </div>
   );
 }

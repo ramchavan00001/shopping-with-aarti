@@ -5,13 +5,16 @@ import { cn } from "@/lib/format";
 import { PriceLine } from "./ProductCard";
 import { SaveProductButton } from "./SaveProductButton";
 import { StoreBadge } from "./StoreBadge";
+import { imgUrl } from "@/lib/img";
+import { useT } from "@/lib/i18n";
 
 /** Compact product line used in the shop drawer, the desktop panel and look pages. */
 export function ProductRow({ product, dark = false }: { product: PublicProduct; dark?: boolean }) {
+  const t = useT();
   return (
     <li className={cn("flex gap-3 rounded-2xl p-2.5", dark ? "bg-white/5" : "bg-surface-2/60")}>
       <a href={product.href} target="_blank" rel="sponsored noopener" className="relative shrink-0">
-        <img src={product.image} alt={product.title} loading="lazy" className="size-24 rounded-xl object-cover" />
+        <img src={imgUrl(product.image, 320)} alt={product.title} loading="lazy" decoding="async" className="size-24 rounded-xl object-cover" />
       </a>
       <div className="flex min-w-0 flex-1 flex-col">
         <StoreBadge store={product.store} size="xs" className="self-start" />
@@ -37,7 +40,7 @@ export function ProductRow({ product, dark = false }: { product: PublicProduct; 
               dark ? "bg-white text-neutral-900 hover:bg-accent hover:text-white" : "bg-ink text-bg hover:bg-accent hover:text-accent-ink",
             )}
           >
-            Buy on {stores[product.store].name} <ArrowUpRight className="size-3.5" />
+            {t("Buy on {store}", { store: stores[product.store].name })} <ArrowUpRight className="size-3.5" />
           </a>
           <SaveProductButton id={product.id} title={product.title} variant={dark ? "dark" : "inline"} className="size-8" />
         </div>

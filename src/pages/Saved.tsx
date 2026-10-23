@@ -9,15 +9,17 @@ import { usePageMeta } from "@/lib/meta";
 import { savedLooks, savedProducts } from "@/lib/saved";
 import { ProductCard, ProductCardSkeleton } from "@/components/ProductCard";
 import { ReelCard, ReelCardSkeleton } from "@/components/ReelCard";
+import { useT } from "@/lib/i18n";
 
 type Tab = "looks" | "products";
 
 export default function Saved() {
+  const t = useT();
   const looks = savedLooks.useList();
   const products = savedProducts.useList();
   const [params, setParams] = useSearchParams();
   const tab: Tab = params.get("tab") === "products" || (!looks.length && products.length && !params.get("tab")) ? "products" : "looks";
-  usePageMeta("Saved", "Looks and products you've saved on this device.");
+  usePageMeta(t("Saved"), t("Looks and products you've saved on this device."));
 
   // Fetch whatever is saved; the API skips anything that's been removed since.
   const [query, setQuery] = useState("");
@@ -47,7 +49,7 @@ export default function Saved() {
   const loading = !!query && !data && !error;
 
   const clear = () => {
-    if (!confirm(`Remove all saved ${tab}?`)) return;
+    if (!confirm(tab === "looks" ? t("Remove all saved looks?") : t("Remove all saved products?"))) return;
     (tab === "looks" ? savedLooks : savedProducts).clear();
   };
 
@@ -56,43 +58,43 @@ export default function Saved() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.2em] text-accent">
-            <Heart className="size-3.5 fill-current" /> Your shortlist
+            <Heart className="size-3.5 fill-current" /> {t("Your shortlist")}
           </p>
-          <h1 className="mt-2 font-display text-4xl font-semibold tracking-tight">Saved</h1>
-          <p className="mt-1 text-sm text-muted">Saved on this device only. No account needed.</p>
+          <h1 className="mt-2 font-display text-4xl font-semibold tracking-tight">{t("Saved")}</h1>
+          <p className="mt-1 text-sm text-muted">{t("Saved on this device only. No account needed.")}</p>
         </div>
         {tab === "looks" && shownLooks.length > 0 && (
           <Link to="/reels?saved=1" className="inline-flex items-center gap-2 rounded-full bg-accent px-5 py-3 text-sm font-semibold text-accent-ink shadow-soft transition hover:brightness-110">
-            <Play className="size-4 fill-current" /> Play saved looks
+            <Play className="size-4 fill-current" /> {t("Play saved looks")}
           </Link>
         )}
       </div>
 
       <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-b border-line">
-        <div role="tablist" aria-label="Saved items" className="flex gap-1">
-          {(["looks", "products"] as Tab[]).map((t) => (
+        <div role="tablist" aria-label={t("Saved items")} className="flex gap-1">
+          {(["looks", "products"] as Tab[]).map((id) => (
             <button
-              key={t}
+              key={id}
               role="tab"
-              aria-selected={tab === t}
-              onClick={() => setParams(t === "looks" ? {} : { tab: t }, { replace: true })}
+              aria-selected={tab === id}
+              onClick={() => setParams(id === "looks" ? {} : { tab: id }, { replace: true })}
               className={cn(
                 "-mb-px border-b-2 px-4 py-3 text-sm font-semibold capitalize transition",
-                tab === t ? "border-accent text-accent" : "border-transparent text-muted hover:text-ink",
+                tab === id ? "border-accent text-accent" : "border-transparent text-muted hover:text-ink",
               )}
             >
-              {t} <span className="ml-1 rounded-full bg-surface-2 px-2 py-0.5 text-xs text-ink">{t === "looks" ? looks.length : products.length}</span>
+              {id === "looks" ? t("Looks") : t("Products")} <span className="ml-1 rounded-full bg-surface-2 px-2 py-0.5 text-xs text-ink">{id === "looks" ? looks.length : products.length}</span>
             </button>
           ))}
         </div>
         {(tab === "looks" ? looks.length : products.length) > 0 && (
           <button onClick={clear} className="mb-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold text-muted transition hover:bg-surface-2 hover:text-ink">
-            <Trash2 className="size-3.5" /> Clear all
+            <Trash2 className="size-3.5" /> {t("Clear all")}
           </button>
         )}
       </div>
 
-      {error && <p className="mt-8 text-sm text-muted">Couldn't load your saved items. Please refresh.</p>}
+      {error && <p className="mt-8 text-sm text-muted">{t("Couldn't load your saved items. Please refresh.")}</p>}
 
       <div className="mt-8">
         {tab === "looks" &&
@@ -105,7 +107,7 @@ export default function Saved() {
                   <ReelCard reel={r} to={lookPath(r)} />
                   <button
                     onClick={() => savedLooks.toggle(r.code)}
-                    aria-label={`Remove ${r.title} from saved`}
+                    aria-label={t("Remove {title} from saved", { title: r.title })}
                     className="absolute right-3 top-12 grid size-9 place-items-center rounded-full bg-white/90 text-neutral-900 shadow-sm backdrop-blur transition hover:bg-white"
                   >
                     <X className="size-4" />
@@ -116,9 +118,9 @@ export default function Saved() {
           ) : (
             <EmptyState
               icon={<Clapperboard className="size-7" />}
-              title="No saved looks yet"
-              text="Tap the heart on any reel or look page to keep it here."
-              cta={{ to: "/reels", label: "Browse reels" }}
+              title={t("No saved looks yet")}
+              text={t("Tap the heart on any reel or look page to keep it here.")}
+              cta={{ to: "/reels", label: t("Browse reels") }}
             />
           ))}
 
@@ -133,7 +135,7 @@ export default function Saved() {
                 <div key={p.id} className="flex flex-col gap-2">
                   <ProductCard product={p} />
                   <Link to={lookPath({ code: p.reelCode, slug: p.reelSlug })} className="truncate px-1 text-xs text-muted hover:text-accent">
-                    From look #{p.reelCode}: {p.reelTitle}
+                    {t("From look #{code}: {title}", { code: p.reelCode, title: p.reelTitle })}
                   </Link>
                 </div>
               ))}
@@ -141,9 +143,9 @@ export default function Saved() {
           ) : (
             <EmptyState
               icon={<Heart className="size-7" />}
-              title="No saved products yet"
-              text="Tap the heart on any product to build your shortlist, then buy when you're ready."
-              cta={{ to: "/category/dresses", label: "Browse products" }}
+              title={t("No saved products yet")}
+              text={t("Tap the heart on any product to build your shortlist, then buy when you're ready.")}
+              cta={{ to: "/category/dresses", label: t("Browse products") }}
             />
           ))}
       </div>

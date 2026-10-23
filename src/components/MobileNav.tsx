@@ -2,9 +2,11 @@ import { Clapperboard, Flame, Heart, Home, Search } from "lucide-react";
 import { NavLink } from "react-router";
 import { cn } from "@/lib/format";
 import { useSavedCount } from "@/lib/saved";
+import { useT } from "@/lib/i18n";
 
 // App-style bottom bar for phones, where most Instagram traffic lands.
 export function MobileNav() {
+  const t = useT();
   const savedCount = useSavedCount();
   const items = [
     { to: "/", label: "Home", icon: Home, end: true },
@@ -15,7 +17,7 @@ export function MobileNav() {
   ];
   return (
     <nav
-      aria-label="Mobile"
+      aria-label={t("Mobile")}
       className="fixed inset-x-3 bottom-3 z-40 rounded-2xl border border-line/80 bg-surface/90 shadow-lift backdrop-blur-xl md:hidden"
       style={{ marginBottom: "env(safe-area-inset-bottom)" }}
     >
@@ -33,7 +35,7 @@ export function MobileNav() {
               }
             >
               <Icon className="size-5" />
-              {label}
+              {t(label)}
               {!!badge && (
                 <span className="absolute right-[calc(50%-18px)] top-1.5 grid min-w-4 place-items-center rounded-full bg-accent px-1 text-[9px] font-bold text-accent-ink">
                   {badge}

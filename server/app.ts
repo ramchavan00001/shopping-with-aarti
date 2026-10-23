@@ -8,10 +8,12 @@ import { publicOrigin } from "./origin";
 import { requestSource, shouldRecord, trackRateLimited, visitorHash } from "./analytics";
 import { eventKinds, ignoredClientErrors, isBot, type EventKind } from "../shared/analytics";
 import { validateSubscribe } from "../shared/subscribe";
+import { parseSubscription } from "../shared/push";
 import type { Catalog, DataSource } from "./data/types";
 import { stores } from "../shared/stores";
 import { categoryPath, lookPath } from "../shared/paths";
 import { validateEnquiry } from "../shared/enquiry";
+import { isResizableHost, isSiteImage, snapWidth } from "../shared/images";
 import { colours, occasions, type Colour, type Occasion, type ProductSort, type StoreId } from "../shared/types";
 
 // One Hono app for every runtime: Vite dev middleware, Node (Render) and
@@ -22,9 +24,14 @@ type Env = { MEDIA_BASE_URL?: string; ENQUIRY_WEBHOOK_URL?: string };
 
 export type SourceResolver = (c: Context) => DataSource;
 
+export interface AppOptions {
+  /** Resize an image to a WebP (Node only); without it /img redirects to the original. */
+  resizeImage?: (src: string, width: number) => Promise<Uint8Array | null>;
+}
+
 const repos = new WeakMap<Catalog, Repo>();
 
-export function createApp(getSource: SourceResolver) {
+export function createApp(getSource: SourceResolver, options: AppOptions = {}) {
   const app = new Hono();
 
   /** Query helpers over the current catalogue snapshot (cached by the source). */
@@ -213,6 +220,37 @@ export function createApp(getSource: SourceResolver) {
     return c.json({ ok: true });
   });
 
+  // Push notifications (src/lib/push.ts and public/sw.js).
+  app.get("/api/push/key", async (c) => {
+    const ops = getSource(c).ops;
+    if (!ops) return c.json({ error: "Notifications aren't available here." }, 404);
+    c.header("Cache-Control", "public, max-age=3600");
+    return c.json({ publicKey: await ops.push.publicKey() });
+  });
+  app.post("/api/push/subscribe", async (c) => {
+    const ops = getSource(c).ops;
+    if (!ops) return c.json({ error: "Notifications aren't available here." }, 404);
+    if (trackRateLimited(c)) return c.json({ error: "Too many requests" }, 429);
+    const body = (await c.req.json().catch(() => null)) as Record<string, unknown> | null;
+    const sub = parseSubscription(body?.subscription);
+    if (!sub) return c.json({ error: "Invalid subscription" }, 400);
+    const replaces = typeof body?.replaces === "string" ? body.replaces : undefined;
+    await ops.push.subscribe(sub, body?.lang === "hi" ? "hi" : "en", requestSource(c, typeof body?.src === "string" ? body.src : null), replaces);
+    return c.json({ ok: true });
+  });
+  app.post("/api/push/unsubscribe", async (c) => {
+    const ops = getSource(c).ops;
+    const body = (await c.req.json().catch(() => null)) as { endpoint?: unknown } | null;
+    if (ops && typeof body?.endpoint === "string") await ops.push.unsubscribe(body.endpoint);
+    return c.json({ ok: true });
+  });
+  app.post("/api/push/click/:id", async (c) => {
+    const ops = getSource(c).ops;
+    const id = Number(c.req.param("id"));
+    if (ops && Number.isInteger(id) && id > 0 && !trackRateLimited(c)) background(c, ops.push.click(id));
+    return c.body(null, 204);
+  });
+
   // Browser errors (sent by src/lib/errors.ts). Always 204.
   app.post("/api/client-errors", async (c) => {
     const ops = getSource(c).ops;
@@ -275,7 +313,7 @@ export function createApp(getSource: SourceResolver) {
     if (!kind) return c.body(null, 204);
 
     let reelCode: string | undefined;
-    if (kind !== "visit") {
+    if (kind === "reel_play" || kind === "look_view") {
       const code = typeof body?.reel === "string" ? body.reel.toUpperCase() : "";
       if (!(await repoFor(c)).getReel(code, {})) return c.body(null, 204);
       reelCode = code;
@@ -309,6 +347,31 @@ export function createApp(getSource: SourceResolver) {
     c.header("Content-Type", "application/xml; charset=utf-8");
     c.header("Cache-Control", "public, max-age=3600");
     return c.body(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`);
+  });
+
+  // Resized images: /img?w=480&src=<site path or image URL>.
+  app.get("/img", async (c) => {
+    const src = c.req.query("src") ?? "";
+    const width = snapWidth(Number(c.req.query("w")) || 640);
+    let allowed = isSiteImage(src);
+    if (!allowed) {
+      try {
+        const url = new URL(src);
+        const base = repoOpts(c).mediaBaseUrl;
+        allowed = url.protocol === "https:" && isResizableHost(url.hostname, base ? new URL(base).hostname : undefined);
+      } catch {
+        allowed = false;
+      }
+    }
+    if (!allowed) return c.text("Image source not allowed", 400);
+    const out = options.resizeImage && (await options.resizeImage(src, width));
+    if (!out) {
+      c.header("Cache-Control", "public, max-age=3600");
+      return c.redirect(src, 302);
+    }
+    c.header("Content-Type", "image/webp");
+    c.header("Cache-Control", "public, max-age=2592000, stale-while-revalidate=86400");
+    return c.body(out as Uint8Array<ArrayBuffer>);
   });
 
   app.get("/robots.txt", (c) => {

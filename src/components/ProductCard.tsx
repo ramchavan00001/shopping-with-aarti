@@ -4,10 +4,13 @@ import { stores } from "@shared/stores";
 import { discountPct, formatPrice } from "@/lib/format";
 import { SaveProductButton } from "./SaveProductButton";
 import { StoreBadge } from "./StoreBadge";
+import { responsive } from "@/lib/img";
+import { useT } from "@/lib/i18n";
 
 export function PriceLine({ product, invert = false }: { product: PublicProduct; invert?: boolean }) {
+  const t = useT();
   if (!product.showPrice) {
-    return <span className={`text-sm ${invert ? "text-white/70" : "text-muted"}`}>See today's price on {stores[product.store].name}</span>;
+    return <span className={`text-sm ${invert ? "text-white/70" : "text-muted"}`}>{t("See today's price on {store}", { store: stores[product.store].name })}</span>;
   }
   const off = discountPct(product.approxPrice, product.mrp);
   return (
@@ -16,7 +19,7 @@ export function PriceLine({ product, invert = false }: { product: PublicProduct;
       {off > 0 && (
         <>
           <span className={`text-xs line-through ${invert ? "text-white/50" : "text-muted"}`}>{formatPrice(product.mrp!)}</span>
-          <span className={`text-xs font-bold ${invert ? "text-emerald-400" : "text-emerald-600 dark:text-emerald-400"}`}>{off}% off</span>
+          <span className={`text-xs font-bold ${invert ? "text-emerald-400" : "text-emerald-600 dark:text-emerald-400"}`}>{t("{n}% off", { n: off })}</span>
         </>
       )}
     </span>
@@ -24,11 +27,12 @@ export function PriceLine({ product, invert = false }: { product: PublicProduct;
 }
 
 export function ProductCard({ product }: { product: PublicProduct }) {
+  const t = useT();
   return (
     <article className="group relative flex flex-col overflow-hidden rounded-3xl border border-line bg-surface shadow-soft transition duration-300 hover:-translate-y-1 hover:shadow-lift">
       <a href={product.href} target="_blank" rel="sponsored noopener" className="relative block aspect-[4/5] overflow-hidden bg-surface-2">
         <img
-          src={product.image}
+          {...responsive(product.image, "(min-width: 1024px) 22vw, (min-width: 640px) 33vw, 50vw", 640)}
           alt={product.title}
           loading="lazy"
           decoding="async"
@@ -55,7 +59,7 @@ export function ProductCard({ product }: { product: PublicProduct }) {
           rel="sponsored noopener"
           className="mt-auto inline-flex items-center justify-center gap-1.5 rounded-full bg-ink px-4 py-2.5 text-sm font-semibold text-bg transition hover:bg-accent hover:text-accent-ink active:scale-[0.98]"
         >
-          Buy on {stores[product.store].name}
+          {t("Buy on {store}", { store: stores[product.store].name })}
           <ArrowUpRight className="size-4" />
         </a>
       </div>

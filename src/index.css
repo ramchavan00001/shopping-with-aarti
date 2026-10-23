@@ -1,6 +1,9 @@
 @import "tailwindcss";
 @import "@fontsource-variable/fraunces";
 @import "@fontsource-variable/inter";
+/* Hindi: only downloaded when Devanagari text is on screen (unicode-range). */
+@import "@fontsource-variable/noto-sans-devanagari";
+@import "@fontsource-variable/noto-serif-devanagari";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
@@ -52,8 +55,8 @@
   --color-gold: var(--gold);
   --color-blush: var(--blush);
   --color-chart: var(--chart);
-  --font-display: "Fraunces Variable", Georgia, serif;
-  --font-sans: "Inter Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Fraunces Variable", "Noto Serif Devanagari Variable", Georgia, serif;
+  --font-sans: "Inter Variable", "Noto Sans Devanagari Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
   --shadow-soft: 0 1px 2px rgb(var(--shadow) / 0.04), 0 8px 24px -8px rgb(var(--shadow) / 0.12);
   --shadow-lift: 0 2px 4px rgb(var(--shadow) / 0.06), 0 20px 40px -12px rgb(var(--shadow) / 0.25);
 }
@@ -112,4 +115,14 @@
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* Devanagari needs room for matras above and below the line: loosen the
+   tight display leading and drop letter-spacing / uppercase styling. */
+:lang(hi) .font-display {
+  line-height: 1.3;
+}
+:lang(hi) .tracking-tight,
+:lang(hi) [class*="tracking-["] {
+  letter-spacing: 0;
 }

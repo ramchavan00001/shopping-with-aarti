@@ -7,6 +7,8 @@ import { stores } from "@shared/stores";
 import { useApi } from "@/lib/api";
 import { cn } from "@/lib/format";
 import { useDebounced } from "@/lib/useDebounced";
+import { imgUrl } from "@/lib/img";
+import { useT } from "@/lib/i18n";
 
 const isCode = (v: string) => /^[a-z]\d{2,4}$/i.test(v);
 
@@ -25,6 +27,7 @@ export function SearchBox({
   autoFocus?: boolean;
   suggest?: boolean;
 }) {
+  const t = useT();
   const [value, setValue] = useState("");
   const [open, setOpen] = useState(false);
   const [highlight, setHighlight] = useState(-1);
@@ -37,8 +40,8 @@ export function SearchBox({
 
   const items = data && q.length >= 2
     ? [
-        ...data.reels.map((r) => ({ key: `r${r.code}`, to: lookPath(r), image: r.poster, title: r.title, sub: `Look #${r.code} · ${r.products.length} items` })),
-        ...data.products.slice(0, 4).map((p) => ({ key: p.id, to: `/look/${p.reelCode.toLowerCase()}`, image: p.image, title: p.title, sub: `${stores[p.store].name} · from #${p.reelCode}` })),
+        ...data.reels.map((r) => ({ key: `r${r.code}`, to: lookPath(r), image: r.poster, title: r.title, sub: t("Look #{code} · {n} items", { code: r.code, n: r.products.length }) })),
+        ...data.products.slice(0, 4).map((p) => ({ key: p.id, to: `/look/${p.reelCode.toLowerCase()}`, image: p.image, title: p.title, sub: t("{store} · from #{code}", { store: stores[p.store].name, code: p.reelCode }) })),
       ]
     : [];
 
@@ -95,8 +98,8 @@ export function SearchBox({
         autoFocus={autoFocus}
         type="search"
         enterKeyHint="search"
-        placeholder={size === "lg" ? "Try A112 or “kurti”" : "Search reel code or product"}
-        aria-label="Search by reel code or product"
+        placeholder={size === "lg" ? t("Try A112 or “kurti”") : t("Search reel code or product")}
+        aria-label={t("Search by reel code or product")}
         role={suggest ? "combobox" : undefined}
         aria-expanded={suggest ? showDropdown : undefined}
         aria-controls={suggest ? listId : undefined}
@@ -111,7 +114,7 @@ export function SearchBox({
           type="submit"
           className="absolute right-1.5 top-1/2 h-11 -translate-y-1/2 rounded-full bg-accent px-5 text-sm font-semibold text-accent-ink transition hover:brightness-110 active:scale-95"
         >
-          Find look
+          {t("Find look")}
         </button>
       )}
 
@@ -119,11 +122,11 @@ export function SearchBox({
         <div className="absolute right-0 top-full z-50 mt-2 w-full min-w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-line bg-surface shadow-lift">
           {isCode(q) && (
             <button type="button" onClick={() => go(`/look/${q.toLowerCase()}`)} className="flex w-full items-center gap-2 border-b border-line px-4 py-3 text-left text-sm font-semibold text-accent hover:bg-surface-2">
-              Open look #{q.toUpperCase()} <ArrowRight className="size-4" />
+              {t("Open look #{code}", { code: q.toUpperCase() })} <ArrowRight className="size-4" />
             </button>
           )}
           {loading && !items.length ? (
-            <p className="flex items-center gap-2 px-4 py-4 text-sm text-muted"><Loader2 className="size-4 animate-spin" /> Searching…</p>
+            <p className="flex items-center gap-2 px-4 py-4 text-sm text-muted"><Loader2 className="size-4 animate-spin" /> {t("Searching…")}</p>
           ) : items.length ? (
             <ul id={listId} role="listbox" className="max-h-96 overflow-y-auto py-1">
               {items.map((it, i) => (
@@ -134,7 +137,7 @@ export function SearchBox({
                     onClick={() => go(it.to)}
                     className={cn("flex w-full items-center gap-3 px-3 py-2 text-left", i === highlight && "bg-surface-2")}
                   >
-                    <img src={it.image} alt="" className="h-12 w-10 shrink-0 rounded-lg object-cover" />
+                    <img src={imgUrl(it.image, 160)} alt="" className="h-12 w-10 shrink-0 rounded-lg object-cover" />
                     <span className="min-w-0">
                       <span className="block truncate text-sm font-medium">{it.title}</span>
                       <span className="block truncate text-xs text-muted">{it.sub}</span>
@@ -144,14 +147,14 @@ export function SearchBox({
               ))}
             </ul>
           ) : (
-            <p className="px-4 py-4 text-sm text-muted">No matches for “{q}”.</p>
+            <p className="px-4 py-4 text-sm text-muted">{t("No matches for “{q}”.", { q })}</p>
           )}
           <button
             type="button"
             onClick={() => go(`/search?q=${encodeURIComponent(q)}`)}
             className="flex w-full items-center justify-between border-t border-line px-4 py-3 text-sm font-semibold hover:bg-surface-2"
           >
-            See all results for “{q}” <ArrowRight className="size-4" />
+            {t("See all results for “{q}”", { q })} <ArrowRight className="size-4" />
           </button>
         </div>
       )}

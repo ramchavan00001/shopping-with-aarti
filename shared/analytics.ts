@@ -1,6 +1,6 @@
 // Traffic sources and site events, shared by the browser tracker and the API.
 
-export const trafficSources = ["instagram", "whatsapp", "facebook", "google", "youtube", "twitter", "direct", "other"] as const;
+export const trafficSources = ["instagram", "whatsapp", "facebook", "google", "youtube", "twitter", "app", "push", "direct", "other"] as const;
 export type TrafficSource = (typeof trafficSources)[number];
 
 export const sourceLabels: Record<TrafficSource, string> = {
@@ -10,11 +10,13 @@ export const sourceLabels: Record<TrafficSource, string> = {
   google: "Google",
   youtube: "YouTube",
   twitter: "X / Twitter",
+  app: "Home-screen app",
+  push: "Notifications",
   direct: "Direct",
   other: "Other sites",
 };
 
-export const eventKinds = ["visit", "reel_play", "look_view"] as const;
+export const eventKinds = ["visit", "reel_play", "look_view", "app_install"] as const;
 export type EventKind = (typeof eventKinds)[number];
 
 const isSource = (v: string): v is TrafficSource => (trafficSources as readonly string[]).includes(v);
@@ -30,6 +32,8 @@ export function normaliseSource(value: string | null | undefined): TrafficSource
   if (/^(yt|youtube.*)$/.test(v)) return "youtube";
   if (/^(x|twitter)$/.test(v)) return "twitter";
   if (/^google/.test(v)) return "google";
+  if (/^(pwa|app)$/.test(v)) return "app";
+  if (/^(push|notification)$/.test(v)) return "push";
   return "other";
 }
 

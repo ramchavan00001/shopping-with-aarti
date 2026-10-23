@@ -7,11 +7,12 @@ import { createErrorLog } from "./errors";
 import { createInstagram } from "./instagram";
 import { createJobs } from "./jobs";
 import { createLinkChecker } from "./links";
+import { createPush } from "./push";
 import { createSubscribers } from "./subscribers";
 
 // Everything that runs behind the scenes on the Node server: error log and
 // alerts, background jobs (link checker, Instagram sync), WhatsApp alert
-// subscribers. Needs the database; not available on the Workers preview.
+// subscribers, push notifications. Needs the database; not available on the Workers preview.
 
 /** Public site address for links in alerts. Render sets RENDER_EXTERNAL_URL. */
 export const siteUrl = () => (process.env.SITE_URL || process.env.RENDER_EXTERNAL_URL || "http://localhost:3000").replace(/\/$/, "");
@@ -22,6 +23,7 @@ export function createOps(db: Db, admin: AdminStore) {
   const links = createLinkChecker(db, jobs, siteUrl, () => {});
   const subscribers = createSubscribers(db);
   const instagram = createInstagram(db, admin, jobs);
+  const push = createPush(db, errors, siteUrl);
 
   return {
     errors,
@@ -29,6 +31,7 @@ export function createOps(db: Db, admin: AdminStore) {
     links,
     subscribers,
     instagram,
+    push,
     async system(): Promise<SystemStatus> {
       const [jobStates, errorRows] = await Promise.all([jobs.all(), errors.list(50)]);
       return { database: true, alerts: alertChannels(), uploads: !!r2FromProcessEnv(), jobs: jobStates, errors: errorRows };

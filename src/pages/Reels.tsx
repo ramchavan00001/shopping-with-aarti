@@ -25,8 +25,11 @@ import { shareReel } from "@/lib/share";
 import { reachedPlayThreshold, trackEvent } from "@/lib/track";
 import { InstagramIcon } from "@/components/icons";
 import { ProductRow } from "@/components/ProductRow";
+import { imgUrl, responsive } from "@/lib/img";
+import { useLang, useT, type Translate } from "@/lib/i18n";
 
 export default function Reels() {
+  const t = useT();
   const [params, setParams] = useSearchParams();
   const saved = useSaved();
   const savedOnly = params.get("saved") === "1";
@@ -124,7 +127,7 @@ export default function Reels() {
   };
 
   const activeReel = reels[active];
-  const filterLabel = describeFilter(params, home);
+  const filterLabel = describeFilter(params, t, home);
 
   return (
     <div className="fixed inset-0 z-50 bg-neutral-950 text-white">
@@ -132,7 +135,7 @@ export default function Reels() {
       {activeReel && (
         <img
           key={activeReel.code}
-          src={activeReel.poster}
+          src={imgUrl(activeReel.poster, 160)}
           alt=""
           aria-hidden
           className="pointer-events-none absolute inset-0 hidden size-full scale-110 object-cover opacity-30 blur-3xl lg:block"
@@ -175,10 +178,10 @@ export default function Reels() {
       {/* desktop: up/down controls and persistent product panel */}
       {reels.length > 1 && (
         <div className="absolute right-[calc(50%+min(28.125dvh,45vw)+1.5rem)] top-1/2 z-20 hidden -translate-y-1/2 flex-col gap-3 lg:flex">
-          <button onClick={() => go(-1)} disabled={active === 0} aria-label="Previous reel" className="grid size-11 place-items-center rounded-full bg-white/10 backdrop-blur transition hover:bg-white/20 disabled:opacity-30">
+          <button onClick={() => go(-1)} disabled={active === 0} aria-label={t("Previous reel")} className="grid size-11 place-items-center rounded-full bg-white/10 backdrop-blur transition hover:bg-white/20 disabled:opacity-30">
             <ChevronUp className="size-5" />
           </button>
-          <button onClick={() => go(1)} disabled={active === reels.length - 1} aria-label="Next reel" className="grid size-11 place-items-center rounded-full bg-white/10 backdrop-blur transition hover:bg-white/20 disabled:opacity-30">
+          <button onClick={() => go(1)} disabled={active === reels.length - 1} aria-label={t("Next reel")} className="grid size-11 place-items-center rounded-full bg-white/10 backdrop-blur transition hover:bg-white/20 disabled:opacity-30">
             <ChevronDown className="size-5" />
           </button>
         </div>
@@ -190,16 +193,16 @@ export default function Reels() {
   );
 }
 
-function describeFilter(params: URLSearchParams, home?: HomePayload) {
-  if (params.get("saved") === "1") return "Saved reels";
+function describeFilter(params: URLSearchParams, t: Translate, home?: HomePayload) {
+  if (params.get("saved") === "1") return t("Saved reels");
   const store = params.get("store");
-  if (store && store in stores) return `${stores[store as keyof typeof stores].name} finds`;
+  if (store && store in stores) return t("{store} finds", { store: stores[store as keyof typeof stores].name });
   const max = params.get("maxPrice");
-  if (max) return `Under ₹${max}`;
+  if (max) return t("Under ₹{n}", { n: max });
   const q = params.get("q");
   if (q) return `“${q}”`;
   const cat = params.get("category");
-  if (cat) return home?.categories.find((c) => c.slug === cat)?.name ?? cat;
+  if (cat) return t(home?.categories.find((c) => c.slug === cat)?.name ?? cat);
   return null;
 }
 
@@ -218,11 +221,12 @@ function TopBar({
   onCategory: (slug?: string) => void;
   onClear: () => void;
 }) {
+  const t = useT();
   const showChip = filterLabel && !current;
   return (
     <div className="pointer-events-none absolute inset-x-0 top-0 z-30 bg-gradient-to-b from-black/60 to-transparent pb-8 pt-[max(0.75rem,env(safe-area-inset-top))]">
       <div className="pointer-events-auto flex items-center gap-2 px-3 lg:px-6">
-        <Link to="/" aria-label="Back to home" className="grid size-10 shrink-0 place-items-center rounded-full bg-black/30 backdrop-blur transition hover:bg-black/50">
+        <Link to="/" aria-label={t("Back to home")} className="grid size-10 shrink-0 place-items-center rounded-full bg-black/30 backdrop-blur transition hover:bg-black/50">
           <ArrowLeft className="size-5" />
         </Link>
         <div className="no-scrollbar flex gap-2 overflow-x-auto py-1">
@@ -231,13 +235,13 @@ function TopBar({
               {filterLabel} <X className="size-3.5" />
             </button>
           ) : (
-            <Chip active={!current} onClick={() => onCategory(undefined)}>For you</Chip>
+            <Chip active={!current} onClick={() => onCategory(undefined)}>{t("For you")}</Chip>
           )}
           {categories
             .filter((c) => c.count > 0)
             .map((c) => (
               <Chip key={c.slug} active={current === c.slug} onClick={() => onCategory(c.slug)}>
-                {c.name}
+                {t(c.name)}
               </Chip>
             ))}
         </div>
@@ -279,6 +283,7 @@ function ReelSlide({
   onToggleMute: () => void;
   onShop: () => void;
 }) {
+  const { lang, t } = useLang();
   const s = useSettings();
   const videoRef = useRef<HTMLVideoElement>(null);
   const [paused, setPaused] = useState(false);
@@ -309,22 +314,22 @@ function ReelSlide({
 
   const onShare = async () => {
     const r = await shareReel(reel);
-    if (r === "copied") flash("Link copied");
+    if (r === "copied") flash(t("Link copied"));
   };
 
   return (
     <section
       data-index={index}
-      aria-label={`Reel ${reel.code}: ${reel.title}`}
+      aria-label={t("Reel {code}: {title}", { code: reel.code, title: reel.title })}
       className="relative flex h-[100dvh] snap-start snap-always items-center justify-center lg:py-4"
     >
       <div className="relative h-full w-full overflow-hidden bg-neutral-900 lg:aspect-[9/16] lg:h-full lg:w-auto lg:rounded-3xl lg:shadow-2xl">
-        <img src={reel.poster} alt="" className="absolute inset-0 size-full object-cover" loading={index < 2 ? "eager" : "lazy"} />
+        <img {...responsive(reel.poster, "(min-width: 1024px) 50vh, 100vw", 1280)} alt="" className="absolute inset-0 size-full object-cover" loading={index < 2 ? "eager" : "lazy"} decoding="async" />
         {shouldLoad && (
           <video
             ref={videoRef}
             src={reel.video}
-            poster={reel.poster}
+            poster={imgUrl(reel.poster, 960)}
             muted={muted}
             loop
             playsInline
@@ -341,7 +346,7 @@ function ReelSlide({
         {/* tap to play / pause */}
         <button
           onClick={() => setPaused((p) => !p)}
-          aria-label={paused ? "Play" : "Pause"}
+          aria-label={paused ? t("Play") : t("Pause")}
           className="absolute inset-0 z-0 cursor-default"
         />
         <AnimatePresence>
@@ -361,13 +366,13 @@ function ReelSlide({
 
         {/* right action rail */}
         <div className="absolute bottom-40 right-3 z-10 flex flex-col items-center gap-5 sm:bottom-44">
-          <RailButton label={saved ? "Saved" : "Save"} onClick={() => (toggleSaved(reel.code), flash(saved ? "Removed from saved" : "Saved"))}>
+          <RailButton label={saved ? t("Saved") : t("Save")} onClick={() => (toggleSaved(reel.code), flash(saved ? t("Removed from saved") : t("Saved")))}>
             <Heart className={cn("size-6 transition", saved && "scale-110 fill-accent text-accent")} />
           </RailButton>
-          <RailButton label="Share" onClick={onShare}>
+          <RailButton label={t("Share")} onClick={onShare}>
             <Send className="size-6" />
           </RailButton>
-          <RailButton label={muted ? "Sound" : "Mute"} onClick={onToggleMute}>
+          <RailButton label={muted ? t("Sound") : t("Mute")} onClick={onToggleMute}>
             {muted ? <VolumeX className="size-6" /> : <Volume2 className="size-6" />}
           </RailButton>
           <a href={reel.instagramUrl || s.instagramUrl} target="_blank" rel="noopener" className="flex flex-col items-center gap-1 text-[11px] font-semibold">
@@ -380,7 +385,7 @@ function ReelSlide({
         <div className="absolute inset-x-0 bottom-0 z-10 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pr-16 sm:pr-20">
           <div className="flex items-center gap-2 text-xs">
             <span className="rounded-full bg-white px-2 py-0.5 font-bold text-neutral-900">#{reel.code}</span>
-            <span className="text-white/70">{timeAgo(reel.publishedAt)} · {formatCount(reel.views)} views</span>
+            <span className="text-white/70">{timeAgo(reel.publishedAt, t, lang)} · {t("{n} views", { n: formatCount(reel.views) })}</span>
           </div>
           <h2 className="mt-2 font-display text-xl font-semibold leading-snug text-balance">{reel.title}</h2>
           <button onClick={() => setExpanded((e) => !e)} className={cn("mt-1 block text-left text-sm text-white/80", !expanded && "line-clamp-2")}>
@@ -390,7 +395,7 @@ function ReelSlide({
           <div className="no-scrollbar -mx-4 mt-3 flex gap-2 overflow-x-auto px-4 lg:hidden">
             {reel.products.map((p) => (
               <button key={p.id} onClick={onShop} className="flex shrink-0 items-center gap-2 rounded-xl bg-white/12 p-1.5 pr-3 text-left backdrop-blur-md">
-                <img src={p.image} alt="" className="size-9 rounded-lg object-cover" />
+                <img src={imgUrl(p.image, 160)} alt="" className="size-9 rounded-lg object-cover" />
                 <span className="max-w-28">
                   <span className="block truncate text-[11px] font-semibold">{p.title}</span>
                   <span className="text-[10px] text-white/70">{stores[p.store].name}</span>
@@ -403,7 +408,7 @@ function ReelSlide({
             onClick={onShop}
             className="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-white py-3.5 text-sm font-bold text-neutral-900 shadow-lg transition active:scale-[0.98] lg:hidden"
           >
-            <ShoppingBag className="size-4" /> Shop this look ({reel.products.length})
+            <ShoppingBag className="size-4" /> {t("Shop this look ({n})", { n: reel.products.length })}
           </button>
         </div>
 
@@ -441,6 +446,7 @@ function RailButton({ label, onClick, children }: { label: string; onClick: () =
 /* --------------------------------------------------------------- Products -- */
 
 function ProductDrawer({ reel, onClose }: { reel?: PublicReel; onClose: () => void }) {
+  const t = useT();
   return (
     <AnimatePresence>
       {reel && (
@@ -457,7 +463,7 @@ function ProductDrawer({ reel, onClose }: { reel?: PublicReel; onClose: () => vo
             key="sheet"
             role="dialog"
             aria-modal="true"
-            aria-label={`Products in reel ${reel.code}`}
+            aria-label={t("Products in reel {code}", { code: reel.code })}
             initial={{ y: "100%" }}
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
@@ -475,10 +481,10 @@ function ProductDrawer({ reel, onClose }: { reel?: PublicReel; onClose: () => vo
             </div>
             <div className="flex items-start justify-between gap-4 px-5 pb-3 pt-3">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">Shop this look · #{reel.code}</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">{t("Shop this look")} · #{reel.code}</p>
                 <h2 className="mt-1 font-display text-lg font-semibold leading-snug">{reel.title}</h2>
               </div>
-              <button onClick={onClose} aria-label="Close" className="grid size-9 shrink-0 place-items-center rounded-full bg-surface-2">
+              <button onClick={onClose} aria-label={t("Close")} className="grid size-9 shrink-0 place-items-center rounded-full bg-surface-2">
                 <X className="size-4" />
               </button>
             </div>
@@ -489,10 +495,10 @@ function ProductDrawer({ reel, onClose }: { reel?: PublicReel; onClose: () => vo
             </ul>
             <div className="flex items-center justify-between gap-3 border-t border-line px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
               <p className="text-[11px] leading-relaxed text-muted">
-                Affiliate links: same price for you. Prices are approximate.
+                {t("Affiliate links: same price for you. Prices are approximate.")}
               </p>
               <Link to={lookPath(reel)} className="flex shrink-0 items-center gap-1 text-xs font-semibold text-accent">
-                Full look <ExternalLink className="size-3.5" />
+                {t("Full look")} <ExternalLink className="size-3.5" />
               </Link>
             </div>
           </motion.div>
@@ -503,14 +509,15 @@ function ProductDrawer({ reel, onClose }: { reel?: PublicReel; onClose: () => vo
 }
 
 function DesktopPanel({ reel }: { reel: PublicReel }) {
+  const t = useT();
   return (
     <aside className="absolute bottom-4 left-[calc(50%+min(28.125dvh,45vw)+1.5rem)] top-20 z-20 hidden w-[22rem] flex-col overflow-hidden rounded-3xl bg-white/[0.06] ring-1 ring-white/10 backdrop-blur-xl xl:flex">
       <div className="px-5 pb-3 pt-5">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/60">Shop this look</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/60">{t("Shop this look")}</p>
         <p className="mt-1 flex items-center justify-between text-sm text-white/80">
-          {reel.products.length} items from #{reel.code}
+          {t("{n} items from #{code}", { n: reel.products.length, code: reel.code })}
           <Link to={lookPath(reel)} className="flex items-center gap-1 text-xs font-semibold text-white hover:underline">
-            Full look <ExternalLink className="size-3.5" />
+            {t("Full look")} <ExternalLink className="size-3.5" />
           </Link>
         </p>
       </div>
@@ -529,7 +536,7 @@ function DesktopPanel({ reel }: { reel: PublicReel }) {
         </motion.ul>
       </AnimatePresence>
       <p className="border-t border-white/10 px-5 py-3 text-[11px] leading-relaxed text-white/50">
-        Affiliate links: same price for you. Use ↑ ↓ to switch reels, M to mute.
+        {t("Affiliate links: same price for you. Use ↑ ↓ to switch reels, M to mute.")}
       </p>
     </aside>
   );
@@ -538,6 +545,7 @@ function DesktopPanel({ reel }: { reel: PublicReel }) {
 /* ------------------------------------------------------------------ Empty -- */
 
 function EmptyState({ savedOnly, error, onReset }: { savedOnly: boolean; error?: string; onReset: () => void }) {
+  const t = useT();
   return (
     <div className="absolute inset-0 grid place-items-center px-8 text-center">
       <div className="max-w-xs">
@@ -545,17 +553,17 @@ function EmptyState({ savedOnly, error, onReset }: { savedOnly: boolean; error?:
           {savedOnly ? <Heart className="size-7" /> : <ShoppingBag className="size-7" />}
         </span>
         <h2 className="mt-5 font-display text-2xl font-semibold">
-          {error ? "Something went wrong" : savedOnly ? "No saved reels yet" : "No reels match that"}
+          {error ? t("Something went wrong") : savedOnly ? t("No saved reels yet") : t("No reels match that")}
         </h2>
         <p className="mt-2 text-sm text-white/65">
           {error
-            ? "Please check your connection and try again."
+            ? t("Please check your connection and try again.")
             : savedOnly
-              ? "Tap the heart on any reel to keep it here for later."
-              : "Try a different reel code or browse everything."}
+              ? t("Tap the heart on any reel to keep it here for later.")
+              : t("Try a different reel code or browse everything.")}
         </p>
         <button onClick={onReset} className="mt-6 inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-neutral-900">
-          Browse all reels
+          {t("Browse all reels")}
         </button>
       </div>
     </div>

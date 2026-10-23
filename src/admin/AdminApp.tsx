@@ -1,4 +1,4 @@
-import { Activity, BarChart3, Clapperboard, ExternalLink, FolderTree, Inbox, Link2, Loader2, LogOut, MessageCircle, Percent, Settings } from "lucide-react";
+import { Activity, BarChart3, Bell, Clapperboard, ExternalLink, FolderTree, Inbox, Link2, Loader2, LogOut, MessageCircle, Percent, Settings } from "lucide-react";
 import { InstagramIcon } from "@/components/icons";
 import { lazy, Suspense, useEffect, useState, type FormEvent } from "react";
 import { NavLink, Route, Routes, useNavigate } from "react-router";
@@ -20,6 +20,7 @@ const EnquiriesAdmin = lazy(() => import("./pages/EnquiriesAdmin"));
 const SettingsAdmin = lazy(() => import("./pages/SettingsAdmin"));
 const LinksAdmin = lazy(() => import("./pages/LinksAdmin"));
 const SubscribersAdmin = lazy(() => import("./pages/SubscribersAdmin"));
+const PushAdmin = lazy(() => import("./pages/PushAdmin"));
 const InstagramAdmin = lazy(() => import("./pages/InstagramAdmin"));
 const SystemAdmin = lazy(() => import("./pages/SystemAdmin"));
 
@@ -103,6 +104,7 @@ const nav = [
   { to: "/admin/instagram", label: "Instagram sync", icon: InstagramIcon },
   { to: "/admin/links", label: "Link health", icon: Link2 },
   { to: "/admin/enquiries", label: "Enquiries", icon: Inbox },
+  { to: "/admin/push", label: "Notifications", icon: Bell },
   { to: "/admin/subscribers", label: "WhatsApp alerts", icon: MessageCircle },
   { to: "/admin/settings", label: "Site settings", icon: Settings },
   { to: "/admin/system", label: "System", icon: Activity },
@@ -179,6 +181,7 @@ function Shell({ database, onLogout }: { database: boolean; onLogout: () => void
               <Route path="settings" element={<SettingsAdmin />} />
               <Route path="links" element={<LinksAdmin />} />
               <Route path="subscribers" element={<SubscribersAdmin />} />
+              <Route path="push" element={<PushAdmin />} />
               <Route path="instagram" element={<InstagramAdmin />} />
               <Route path="system" element={<SystemAdmin />} />
             </Routes>

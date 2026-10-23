@@ -14,3 +14,8 @@ Steps for each are in the README. Tick items off as they're done.
 - [ ] Category tile photos in Admin → Categories (`/images/aarti/cat-ethnic.webp`, `cat-western.webp`, `cat-bags.webp`); photos still wanted for Dresses, Sarees, Footwear, Jewellery, Beauty
 - [ ] Real values in Admin → Site settings (numbers, email, story, media kit)
 - [ ] Remove demo content (Admin → Site settings) once enough real reels are up
+
+## Features postponed by the owner (build later)
+- [ ] Shopper login (saved items across devices)
+- [ ] Team accounts for an assistant
+- [ ] Price-drop and back-in-stock alerts

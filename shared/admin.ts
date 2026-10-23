@@ -219,6 +219,53 @@ export interface InstagramMedia {
   importedAs: string | null;
 }
 
+/* ------------------------------------------------ Push notifications -- */
+
+/** Link a notification opens: a page on this site ("/deals") or a full https link. */
+const pushLink = z
+  .string()
+  .trim()
+  .min(1, "Add the page to open")
+  .max(500)
+  .refine((v) => /^\/[^/]/.test(v) || v === "/" || /^https:\/\//.test(v), "Use a site page like /deals or a full https:// link");
+
+export const pushMessageInput = z.object({
+  title: z.string().trim().min(3, "Add a title").max(60, "Keep the title under 60 characters"),
+  body: z.string().trim().min(3, "Add a message").max(160, "Keep the message under 160 characters"),
+  titleHi: z.string().trim().max(60).default(""),
+  bodyHi: z.string().trim().max(160).default(""),
+  url: pushLink,
+  image: z.string().trim().max(1000).default(""),
+  /** Send only to this browser (the admin's own test). */
+  testEndpoint: z.string().max(1000).optional(),
+});
+export type PushMessageInput = z.input<typeof pushMessageInput>;
+
+export interface PushMessageRow {
+  id: number;
+  title: string;
+  body: string;
+  titleHi: string | null;
+  bodyHi: string | null;
+  url: string;
+  image: string | null;
+  status: "sending" | "sent" | "failed";
+  sent: number;
+  failed: number;
+  clicks: number;
+  createdAt: string;
+  finishedAt: string | null;
+}
+
+export interface PushStatus {
+  subscribers: number;
+  hindi: number;
+  /** Last 30 days. */
+  installs: number;
+  appVisits: number;
+  messages: PushMessageRow[];
+}
+
 export const enquiryStatuses = ["new", "replied", "archived"] as const;
 export type EnquiryStatus = (typeof enquiryStatuses)[number];
 
@@ -268,7 +315,7 @@ export interface AdminStats {
   reelPerformance: { code: string; title: string; poster: string; plays: number; lookViews: number; clicks: number }[];
   recentEnquiries: AdminEnquiry[];
   /** Broken links, WhatsApp subscribers and errors in the last 24 h. */
-  ops?: { brokenLinks: number; subscribers: number; recentErrors: number };
+  ops?: { brokenLinks: number; subscribers: number; recentErrors: number; pushSubscribers: number };
 }
 
 export interface AdminConfig {

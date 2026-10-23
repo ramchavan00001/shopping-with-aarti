@@ -12,7 +12,7 @@ function honoDevServer() {
     configureServer(server: ViteDevServer) {
       server.middlewares.use(async (req, res, next) => {
         const url = req.url ?? "";
-        if (!url.startsWith("/api/") && !url.startsWith("/go/") && url !== "/sitemap.xml") return next();
+        if (!url.startsWith("/api/") && !url.startsWith("/go/") && !url.startsWith("/img?") && url !== "/sitemap.xml") return next();
         try {
           const { default: app } = await server.ssrLoadModule("/server/dev.ts");
           await getRequestListener((request) => app.fetch(request, process.env))(req, res);

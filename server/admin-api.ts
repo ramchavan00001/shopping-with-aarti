@@ -5,6 +5,7 @@ import {
   categoryInput,
   enquiryStatuses,
   fieldErrors,
+  pushMessageInput,
   lootDealInput,
   reelInput,
   saleEventInput,
@@ -93,9 +94,10 @@ export function createAdminApi(getSource: SourceResolver) {
     const stats = await store(c).stats(days);
     const o = getSource(c).ops;
     const opsSummary = o
-      ? await Promise.all([o.links.brokenCount(), o.subscribers.count(), o.errors.list(20)]).then(([brokenLinks, subscribers, errs]) => ({
+      ? await Promise.all([o.links.brokenCount(), o.subscribers.count(), o.errors.list(20), o.push.count()]).then(([brokenLinks, subscribers, errs, pushSubscribers]) => ({
           brokenLinks,
           subscribers,
+          pushSubscribers,
           recentErrors: errs.filter((e) => Date.now() - Date.parse(e.lastSeen) < 86_400_000).length,
         }))
       : undefined;
@@ -205,6 +207,14 @@ export function createAdminApi(getSource: SourceResolver) {
   api.delete("/subscribers/:id", async (c) => {
     await ops(c).subscribers.remove(Number(c.req.param("id")));
     return c.json({ ok: true });
+  });
+
+  // Push notifications
+  api.get("/push", async (c) => c.json(await ops(c).push.status()));
+  api.post("/push/send", async (c) => {
+    const input = await parse(c, pushMessageInput);
+    if (input instanceof Response) return input;
+    return c.json(await ops(c).push.send(input));
   });
 
   // Instagram auto-sync

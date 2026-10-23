@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/format";
+import { useT } from "@/lib/i18n";
 
 // One shared 1-second ticker for every countdown on the page.
 const subscribers = new Set<(t: number) => void>();
@@ -30,16 +31,17 @@ const pad = (n: number) => String(n).padStart(2, "0");
 
 /** Big segmented countdown: 02d : 14h : 05m : 09s */
 export function CountdownBlocks({ to, className }: { to: string; className?: string }) {
+  const t = useT();
   const now = useNow();
   const { d, h, m, s } = splitDuration(Date.parse(to) - now);
   const parts = [
-    { v: d, l: "days" },
-    { v: h, l: "hrs" },
-    { v: m, l: "min" },
-    { v: s, l: "sec" },
+    { v: d, l: t("days") },
+    { v: h, l: t("hrs") },
+    { v: m, l: t("min") },
+    { v: s, l: t("sec") },
   ];
   return (
-    <div className={cn("flex gap-2", className)} role="timer" aria-label={`${d} days ${h} hours ${m} minutes left`}>
+    <div className={cn("flex gap-2", className)} role="timer" aria-label={t("{d} days {h} hours {m} minutes left", { d, h, m })}>
       {parts.map((p) => (
         <span key={p.l} className="grid min-w-14 place-items-center rounded-2xl bg-black/25 px-2 py-2 backdrop-blur">
           <span className="font-display text-2xl font-semibold tabular-nums leading-none">{pad(p.v)}</span>
@@ -51,14 +53,15 @@ export function CountdownBlocks({ to, className }: { to: string; className?: str
 }
 
 /** Compact text countdown: "1d 04:05:09" */
-export function CountdownText({ to, endedLabel = "Ended" }: { to: string; endedLabel?: string }) {
+export function CountdownText({ to, endedLabel }: { to: string; endedLabel?: string }) {
+  const t = useT();
   const now = useNow();
   const ms = Date.parse(to) - now;
-  if (ms <= 0) return <span>{endedLabel}</span>;
+  if (ms <= 0) return <span>{endedLabel ?? t("Ended")}</span>;
   const { d, h, m, s } = splitDuration(ms);
   return (
     <span className="tabular-nums">
-      {d > 0 && `${d}d `}
+      {d > 0 && t("{d}d ", { d })}
       {pad(h)}:{pad(m)}:{pad(s)}
     </span>
   );

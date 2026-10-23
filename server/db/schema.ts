@@ -113,7 +113,7 @@ export const events = pgTable(
   "events",
   {
     id: bigserial("id", { mode: "number" }).primaryKey(),
-    /** visit | reel_play | look_view */
+    /** visit | reel_play | look_view | app_install */
     kind: text("kind").notNull(),
     reelCode: text("reel_code"),
     path: text("path"),
@@ -204,4 +204,36 @@ export const jobRuns = pgTable("job_runs", {
   /** ok | failed | running */
   lastStatus: text("last_status"),
   lastSummary: text("last_summary"),
+});
+
+/** Browsers that allowed push notifications. */
+export const pushSubscriptions = pgTable("push_subscriptions", {
+  id: serial("id").primaryKey(),
+  endpoint: text("endpoint").notNull().unique(),
+  p256dh: text("p256dh").notNull(),
+  auth: text("auth").notNull(),
+  /** Site language when they subscribed: en | hi */
+  lang: text("lang").notNull().default("en"),
+  source: text("source").notNull().default("direct"),
+  failures: integer("failures").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  lastSentAt: timestamp("last_sent_at", { withTimezone: true }),
+});
+
+/** Notifications sent from the admin panel. */
+export const pushMessages = pgTable("push_messages", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  body: text("body").notNull(),
+  titleHi: text("title_hi"),
+  bodyHi: text("body_hi"),
+  url: text("url").notNull(),
+  image: text("image"),
+  /** sending | sent | failed */
+  status: text("status").notNull().default("sending"),
+  sent: integer("sent").notNull().default(0),
+  failed: integer("failed").notNull().default(0),
+  clicks: integer("clicks").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  finishedAt: timestamp("finished_at", { withTimezone: true }),
 });

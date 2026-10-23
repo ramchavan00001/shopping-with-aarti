@@ -20,6 +20,8 @@ import { cn } from "@/lib/format";
 import { usePageMeta } from "@/lib/meta";
 import { useSettings } from "@/lib/settings";
 import { InstagramIcon } from "@/components/icons";
+import { responsive } from "@/lib/img";
+import { useLang, useT } from "@/lib/i18n";
 
 const promises = [
   { icon: Wallet, title: "I pay for what I review", text: "Everything in my try-on reels is bought with my own money, unless it's clearly marked as a collaboration." },
@@ -41,8 +43,9 @@ const faqs = [
 ];
 
 export default function About() {
+  const { lang, t } = useLang();
   const s = useSettings();
-  usePageMeta("About Aarti & brand collaborations", "Meet Aarti, who tries on affordable fashion so you don't have to. Brands can enquire about collaborations here.");
+  usePageMeta(t("About Aarti & brand collaborations"), t("Meet Aarti, who tries on affordable fashion so you don't have to. Brands can enquire about collaborations here."));
 
   return (
     <div className="pb-8">
@@ -50,28 +53,36 @@ export default function About() {
       <section className="container-page grid items-center gap-10 pt-8 sm:pt-12 lg:grid-cols-[1fr_1.1fr] lg:gap-16">
         <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.6 }} className="relative mx-auto w-full max-w-md">
           <div className="aspect-[4/5] overflow-hidden rounded-t-full rounded-b-[2rem] border-4 border-surface shadow-lift">
-            <img src={s.aboutPortrait} alt="Aarti" className="size-full object-cover" />
+            <img {...responsive(s.aboutPortrait, "(min-width: 1024px) 448px, 90vw", 960)} alt={t("Aarti")} className="size-full object-cover" />
           </div>
           <div className="absolute -bottom-4 left-1/2 flex -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full bg-ink px-4 py-2.5 text-sm font-semibold text-bg shadow-lift">
             <InstagramIcon className="size-4" /> {s.instagramHandle}
           </div>
         </motion.div>
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1 }}>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">About me</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">{t("About me")}</p>
           <h1 className="mt-2 font-display text-4xl font-semibold leading-tight tracking-tight text-balance sm:text-5xl">
-            Hi, I'm Aarti. I try it on <span className="italic text-accent">before</span> you buy it.
+            {lang === "hi" ? (
+              <>
+                नमस्ते, मैं Aarti हूँ। आपके ख़रीदने से <span className="italic text-accent">पहले</span> मैं पहनकर देखती हूँ।
+              </>
+            ) : (
+              <>
+                Hi, I'm Aarti. I try it on <span className="italic text-accent">before</span> you buy it.
+              </>
+            )}
           </h1>
           <div className="mt-5 space-y-4 text-base leading-relaxed text-muted sm:text-lg">
             {s.aboutStory.map((para, i) => (
-              <p key={i}>{para}</p>
+              <p key={i}>{t(para)}</p>
             ))}
           </div>
           <div className="mt-8 flex flex-wrap gap-3">
             <a href="#collab" className="inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3.5 text-sm font-semibold text-accent-ink shadow-lift transition hover:brightness-110">
-              <Send className="size-4" /> Work with me
+              <Send className="size-4" /> {t("Work with me")}
             </a>
             <Link to="/reels" className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-6 py-3.5 text-sm font-semibold transition hover:border-accent hover:text-accent">
-              <Clapperboard className="size-4" /> Watch my reels
+              <Clapperboard className="size-4" /> {t("Watch my reels")}
             </Link>
           </div>
         </motion.div>
@@ -90,8 +101,8 @@ export default function About() {
               className="rounded-3xl border border-line bg-surface p-6 shadow-soft"
             >
               <span className="grid size-12 place-items-center rounded-2xl bg-accent-soft text-accent"><Icon className="size-5" /></span>
-              <h2 className="mt-4 text-lg font-semibold">{title}</h2>
-              <p className="mt-1.5 text-sm leading-relaxed text-muted">{text}</p>
+              <h2 className="mt-4 text-lg font-semibold">{t(title)}</h2>
+              <p className="mt-1.5 text-sm leading-relaxed text-muted">{t(text)}</p>
             </motion.div>
           ))}
         </div>
@@ -100,20 +111,20 @@ export default function About() {
       {/* media kit */}
       <section className="container-page pt-20">
         <div className="overflow-hidden rounded-[2rem] bg-ink px-6 py-10 text-bg sm:px-12 sm:py-14">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold">For brands</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold">{t("For brands")}</p>
           <h2 className="mt-2 max-w-2xl font-display text-3xl font-semibold tracking-tight sm:text-4xl">
-            Reach shoppers who are ready to buy
+            {t("Reach shoppers who are ready to buy")}
           </h2>
           <dl className="mt-10 grid grid-cols-2 gap-6 lg:grid-cols-4">
             {s.mediaKitStats.map((s) => (
               <div key={s.label} className="rounded-2xl bg-bg/5 p-5 ring-1 ring-bg/10">
                 <dd className="font-display text-4xl font-semibold">{s.value}</dd>
-                <dt className="mt-1 text-sm text-bg/65">{s.label}</dt>
+                <dt className="mt-1 text-sm text-bg/65">{t(s.label)}</dt>
               </div>
             ))}
           </dl>
           <div className="mt-6 flex flex-wrap items-center gap-2 text-sm text-bg/70">
-            <MapPin className="size-4 text-gold" /> Top cities:
+            <MapPin className="size-4 text-gold" /> {t("Top cities:")}
             {s.topCities.map((c) => (
               <span key={c} className="rounded-full bg-bg/10 px-3 py-1 text-xs font-medium text-bg">{c}</span>
             ))}
@@ -123,8 +134,8 @@ export default function About() {
               <div key={title} className="flex gap-3">
                 <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-accent text-accent-ink"><Icon className="size-4" /></span>
                 <div>
-                  <h3 className="font-semibold">{title}</h3>
-                  <p className="mt-0.5 text-sm text-bg/65">{text}</p>
+                  <h3 className="font-semibold">{t(title)}</h3>
+                  <p className="mt-0.5 text-sm text-bg/65">{t(text)}</p>
                 </div>
               </div>
             ))}
@@ -136,24 +147,24 @@ export default function About() {
       <section id="collab" className="container-page scroll-mt-24 pt-20">
         <div className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">Collaborations</p>
-            <h2 className="mt-2 font-display text-3xl font-semibold tracking-tight sm:text-4xl">Let's create something together</h2>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">{t("Collaborations")}</p>
+            <h2 className="mt-2 font-display text-3xl font-semibold tracking-tight sm:text-4xl">{t("Let's create something together")}</h2>
             <p className="mt-3 text-muted">
-              Tell me about your brand and what you have in mind. I reply to every enquiry within 2 working days.
+              {t("Tell me about your brand and what you have in mind. I reply to every enquiry within 2 working days.")}
             </p>
             {s.email && (
               <p className="mt-4 text-sm text-muted">
-                Prefer email? <a className="font-semibold text-accent hover:underline" href={`mailto:${s.email}`}>{s.email}</a>
+                {t("Prefer email?")} <a className="font-semibold text-accent hover:underline" href={`mailto:${s.email}`}>{s.email}</a>
               </p>
             )}
             <div className="mt-8 space-y-3">
               {faqs.map((f) => (
                 <details key={f.q} className="group rounded-2xl border border-line bg-surface px-5 py-4 [&_summary::-webkit-details-marker]:hidden">
                   <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-semibold">
-                    {f.q}
+                    {t(f.q)}
                     <ChevronDown className="size-4 shrink-0 transition group-open:rotate-180" />
                   </summary>
-                  <p className="mt-2 text-sm leading-relaxed text-muted">{f.a}</p>
+                  <p className="mt-2 text-sm leading-relaxed text-muted">{t(f.a)}</p>
                 </details>
               ))}
             </div>
@@ -166,14 +177,15 @@ export default function About() {
 }
 
 function Field({ label, error, optional, children }: { label: string; error?: string; optional?: boolean; children: ReactNode }) {
+  const t = useT();
   return (
     <label className="block">
       <span className="mb-1.5 flex items-center justify-between text-sm font-medium">
-        {label}
-        {optional && <span className="text-xs font-normal text-muted">Optional</span>}
+        {t(label)}
+        {optional && <span className="text-xs font-normal text-muted">{t("Optional")}</span>}
       </span>
       {children}
-      {error && <span className="mt-1.5 block text-xs font-medium text-red-600 dark:text-red-400">{error}</span>}
+      {error && <span className="mt-1.5 block text-xs font-medium text-red-600 dark:text-red-400">{t(error)}</span>}
     </label>
   );
 }
@@ -185,6 +197,7 @@ const inputCls = (err?: string) =>
   );
 
 function EnquiryForm() {
+  const t = useT();
   const s = useSettings();
   const [errors, setErrors] = useState<EnquiryErrors>({});
   const [state, setState] = useState<"idle" | "sending" | "sent" | "failed">("idle");
@@ -206,7 +219,7 @@ function EnquiryForm() {
       const json = (await res.json().catch(() => ({}))) as { error?: string; errors?: EnquiryErrors };
       if (!res.ok) {
         if (json.errors) setErrors(json.errors);
-        throw new Error(json.error ?? "Something went wrong.");
+        throw new Error(t(json.error ?? "Something went wrong."));
       }
       setState("sent");
       form.reset();
@@ -220,9 +233,9 @@ function EnquiryForm() {
     return (
       <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} className="grid place-items-center rounded-[2rem] border border-line bg-surface p-10 text-center shadow-soft">
         <CheckCircle2 className="size-14 text-emerald-600" />
-        <h3 className="mt-4 font-display text-2xl font-semibold">Thank you!</h3>
-        <p className="mt-2 max-w-sm text-muted">Your enquiry is with me. I'll get back to you within 2 working days.</p>
-        <button onClick={() => setState("idle")} className="mt-6 rounded-full border border-line px-5 py-2.5 text-sm font-semibold">Send another</button>
+        <h3 className="mt-4 font-display text-2xl font-semibold">{t("Thank you!")}</h3>
+        <p className="mt-2 max-w-sm text-muted">{t("Your enquiry is with me. I'll get back to you within 2 working days.")}</p>
+        <button onClick={() => setState("idle")} className="mt-6 rounded-full border border-line px-5 py-2.5 text-sm font-semibold">{t("Send another")}</button>
       </motion.div>
     );
   }
@@ -234,7 +247,7 @@ function EnquiryForm() {
           <input name="name" autoComplete="name" className={inputCls(errors.name)} placeholder="Priya Sharma" />
         </Field>
         <Field label="Brand / company" error={errors.brand}>
-          <input name="brand" autoComplete="organization" className={inputCls(errors.brand)} placeholder="Your brand" />
+          <input name="brand" autoComplete="organization" className={inputCls(errors.brand)} placeholder={t("Your brand")} />
         </Field>
         <Field label="Email" error={errors.email}>
           <input name="email" type="email" autoComplete="email" className={inputCls(errors.email)} placeholder="you@brand.com" />
@@ -244,19 +257,19 @@ function EnquiryForm() {
         </Field>
         <Field label="Collaboration type" error={errors.type}>
           <select name="type" defaultValue="" className={inputCls(errors.type)}>
-            <option value="" disabled>Choose one</option>
-            {collabTypes.map((t) => <option key={t}>{t}</option>)}
+            <option value="" disabled>{t("Choose one")}</option>
+            {collabTypes.map((c) => <option key={c} value={c}>{t(c)}</option>)}
           </select>
         </Field>
         <Field label="Budget" error={errors.budget}>
           <select name="budget" defaultValue="" className={inputCls(errors.budget)}>
-            <option value="" disabled>Choose one</option>
-            {budgets.map((b) => <option key={b}>{b}</option>)}
+            <option value="" disabled>{t("Choose one")}</option>
+            {budgets.map((b) => <option key={b} value={b}>{t(b)}</option>)}
           </select>
         </Field>
         <div className="sm:col-span-2">
           <Field label="Tell me about the campaign" error={errors.message}>
-            <textarea name="message" rows={5} className={cn(inputCls(errors.message), "resize-y")} placeholder="Products, timeline, deliverables, anything else I should know…" />
+            <textarea name="message" rows={5} className={cn(inputCls(errors.message), "resize-y")} placeholder={t("Products, timeline, deliverables, anything else I should know…")} />
           </Field>
         </div>
         {/* honeypot: hidden from people, bots fill it */}
@@ -267,7 +280,7 @@ function EnquiryForm() {
           {failMsg}
           {s.email && (
             <>
-              {" "}You can also email <a className="font-semibold underline" href={`mailto:${s.email}`}>{s.email}</a>.
+              {" "}{t("You can also email")} <a className="font-semibold underline" href={`mailto:${s.email}`}>{s.email}</a>.
             </>
           )}
         </p>
@@ -278,10 +291,10 @@ function EnquiryForm() {
         className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-accent px-6 py-3.5 text-sm font-semibold text-accent-ink shadow-soft transition hover:brightness-110 disabled:opacity-70 sm:w-auto"
       >
         {state === "sending" ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
-        {state === "sending" ? "Sending…" : "Send enquiry"}
+        {state === "sending" ? t("Sending…") : t("Send enquiry")}
       </button>
       <p className="mt-3 text-xs text-muted">
-        I'll only use your details to reply to this enquiry. See the <Link to="/privacy" className="underline hover:text-accent">privacy policy</Link>.
+        {t("I'll only use your details to reply to this enquiry. See the")} <Link to="/privacy" className="underline hover:text-accent">{t("privacy policy")}</Link>{t(".")}
       </p>
     </form>
   );

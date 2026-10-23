@@ -25,6 +25,8 @@ import { ReelCard, ReelCardSkeleton } from "@/components/ReelCard";
 import { SearchBox } from "@/components/SearchBox";
 import { SectionHeading } from "@/components/SectionHeading";
 import { StoreBadge } from "@/components/StoreBadge";
+import { imgUrl, responsive } from "@/lib/img";
+import { useLang, useT } from "@/lib/i18n";
 
 const fadeUp: Variants = {
   hidden: { opacity: 0, y: 24 },
@@ -47,6 +49,7 @@ function Reveal({ children, className, delay = 0 }: { children: ReactNode; class
 }
 
 export default function Home() {
+  const t = useT();
   const { data, error } = useApi<HomePayload>("/api/home");
 
   return (
@@ -61,7 +64,7 @@ export default function Home() {
       <About />
       {error && (
         <p className="container-page mt-8 text-center text-sm text-muted">
-          Couldn't load the latest reels right now. Please refresh in a moment.
+          {t("Couldn't load the latest reels right now. Please refresh in a moment.")}
         </p>
       )}
     </>
@@ -71,7 +74,13 @@ export default function Home() {
 /* ------------------------------------------------------------------ Hero -- */
 
 function Hero({ featured }: { featured?: PublicReel }) {
+  const { lang, t } = useLang();
   const s = useSettings();
+  const underline = (
+    <svg aria-hidden viewBox="0 0 200 12" className="absolute -bottom-1 left-0 h-3 w-full text-gold" preserveAspectRatio="none">
+      <path d="M2 9c40-6 120-8 196-3" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+    </svg>
+  );
   return (
     <section className="relative overflow-hidden">
       {/* soft background blobs */}
@@ -81,26 +90,28 @@ function Hero({ featured }: { featured?: PublicReel }) {
       <div className="container-page relative grid items-center gap-12 pb-16 pt-8 sm:pt-12 lg:grid-cols-[1.05fr_1fr] lg:gap-8 lg:pb-24 lg:pt-16">
         <motion.div initial="hidden" animate="show" variants={{ show: { transition: { staggerChildren: 0.08 } } }}>
           <motion.p variants={fadeUp} className="inline-flex items-center gap-2 rounded-full border border-line bg-surface/70 px-3 py-1.5 text-xs font-semibold text-ink/80 shadow-soft backdrop-blur">
-            <Sparkles className="size-3.5 text-gold" /> New try-on reels every week
+            <Sparkles className="size-3.5 text-gold" /> {t("New try-on reels every week")}
           </motion.p>
           <motion.h1 variants={fadeUp} className="mt-5 font-display text-[2.6rem] font-semibold leading-[1.05] tracking-tight text-balance sm:text-6xl xl:text-7xl">
-            Real outfits. <span className="italic text-accent">Real prices.</span>{" "}
-            <span className="relative whitespace-nowrap">
-              Tried on
-              <svg aria-hidden viewBox="0 0 200 12" className="absolute -bottom-1 left-0 h-3 w-full text-gold" preserveAspectRatio="none">
-                <path d="M2 9c40-6 120-8 196-3" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-              </svg>
-            </span>{" "}
-            by me.
+            {t("Real outfits.")} <span className="italic text-accent">{t("Real prices.")}</span>{" "}
+            {lang === "hi" ? (
+              <>
+                मैंने <span className="relative whitespace-nowrap">ख़ुद पहनकर{underline}</span> देखे।
+              </>
+            ) : (
+              <>
+                <span className="relative whitespace-nowrap">Tried on{underline}</span> by me.
+              </>
+            )}
           </motion.h1>
           <motion.p variants={fadeUp} className="mt-6 max-w-xl text-base leading-relaxed text-muted sm:text-lg">
-            {s.heroIntro}
+            {t(s.heroIntro)}
           </motion.p>
 
           <motion.div variants={fadeUp} className="mt-8 max-w-lg">
             <SearchBox size="lg" suggest />
             <p className="mt-2.5 pl-4 text-xs text-muted">
-              Saw a reel on Instagram? Type the code from the caption, e.g. <b className="text-ink">#{featured?.code ?? "A112"}</b>
+              {t("Saw a reel on Instagram? Type the code from the caption, e.g.")} <b className="text-ink">#{featured?.code ?? "A112"}</b>
             </p>
           </motion.div>
 
@@ -109,7 +120,7 @@ function Hero({ featured }: { featured?: PublicReel }) {
               to="/reels"
               className="group inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3.5 text-sm font-semibold text-accent-ink shadow-lift transition hover:brightness-110 active:scale-[0.98]"
             >
-              <Clapperboard className="size-4" /> Watch & shop reels
+              <Clapperboard className="size-4" /> {t("Watch & shop reels")}
               <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
             </Link>
             <a
@@ -125,9 +136,9 @@ function Hero({ featured }: { featured?: PublicReel }) {
           <motion.dl variants={fadeUp} className="mt-10 flex gap-8 sm:gap-12">
             {s.stats.map((s) => (
               <div key={s.label}>
-                <dt className="sr-only">{s.label}</dt>
+                <dt className="sr-only">{t(s.label)}</dt>
                 <dd className="font-display text-3xl font-semibold">{s.value}</dd>
-                <dd className="text-xs font-medium uppercase tracking-wider text-muted">{s.label}</dd>
+                <dd className="text-xs font-medium uppercase tracking-wider text-muted">{t(s.label)}</dd>
               </div>
             ))}
           </motion.dl>
@@ -140,6 +151,7 @@ function Hero({ featured }: { featured?: PublicReel }) {
 }
 
 function HeroVisual({ featured }: { featured?: PublicReel }) {
+  const t = useT();
   const s = useSettings();
   const [muted, setMuted] = useState(true);
   const chips = featured?.products.slice(0, 2) ?? [];
@@ -153,7 +165,7 @@ function HeroVisual({ featured }: { featured?: PublicReel }) {
     >
       {/* arch portrait */}
       <div className="absolute left-0 top-6 h-[78%] w-[62%] overflow-hidden rounded-t-full rounded-b-[2rem] border-4 border-surface shadow-lift">
-        <img src={s.heroPortrait} alt="Aarti with a tote bag on her shoulder" className="size-full object-cover" fetchPriority="high" />
+        <img {...responsive(s.heroPortrait, "(min-width: 1024px) 26vw, 60vw", 960)} alt={t("Aarti with a tote bag on her shoulder")} className="size-full object-cover" fetchPriority="high" />
       </div>
 
       {/* phone with the featured reel */}
@@ -164,7 +176,7 @@ function HeroVisual({ featured }: { featured?: PublicReel }) {
               <video
                 key={featured.code}
                 src={featured.video}
-                poster={featured.poster}
+                poster={imgUrl(featured.poster, 640)}
                 autoPlay
                 muted={muted}
                 loop
@@ -176,7 +188,7 @@ function HeroVisual({ featured }: { featured?: PublicReel }) {
               <span className="absolute left-3 top-3 rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-bold text-neutral-900">#{featured.code}</span>
               <button
                 onClick={() => setMuted((m) => !m)}
-                aria-label={muted ? "Unmute" : "Mute"}
+                aria-label={muted ? t("Unmute") : t("Mute")}
                 className="absolute right-3 top-3 grid size-8 place-items-center rounded-full bg-black/40 text-white backdrop-blur"
               >
                 {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
@@ -185,7 +197,7 @@ function HeroVisual({ featured }: { featured?: PublicReel }) {
                 to={`/reels?start=${featured.code}`}
                 className="absolute inset-x-3 bottom-3 flex items-center justify-center gap-1.5 rounded-full bg-white py-2.5 text-xs font-bold text-neutral-900 transition hover:bg-accent hover:text-white"
               >
-                <ShoppingBag className="size-3.5" /> Shop this look
+                <ShoppingBag className="size-3.5" /> {t("Shop this look")}
               </Link>
             </>
           )}
@@ -209,7 +221,7 @@ function HeroVisual({ featured }: { featured?: PublicReel }) {
             i === 0 ? "-left-2 bottom-24 sm:-left-6" : "right-2 top-0 sm:-right-4"
           }`}
         >
-          <img src={p.image} alt="" className="size-12 rounded-xl object-cover" />
+          <img src={imgUrl(p.image, 160)} alt="" className="size-12 rounded-xl object-cover" />
           <span className="min-w-0">
             <span className="block truncate text-xs font-semibold">{p.title}</span>
             <span className="mt-1 flex items-center gap-1.5">
@@ -221,7 +233,7 @@ function HeroVisual({ featured }: { featured?: PublicReel }) {
       ))}
 
       <div className="absolute -bottom-3 left-6 flex items-center gap-2 rounded-full bg-ink px-3.5 py-2 text-xs font-semibold text-bg shadow-lift">
-        <BadgeCheck className="size-4 text-gold" /> Tried & tested by Aarti
+        <BadgeCheck className="size-4 text-gold" /> {t("Tried & tested by Aarti")}
       </div>
     </motion.div>
   );
@@ -230,11 +242,12 @@ function HeroVisual({ featured }: { featured?: PublicReel }) {
 /* ----------------------------------------------------------- Store strip -- */
 
 function StoreStrip({ stores: list }: { stores?: HomePayload["stores"] }) {
+  const t = useT();
   const ids = list ?? (["amazon", "flipkart", "meesho", "myntra"] as const).map((id) => ({ id, count: 0 }));
   return (
-    <section aria-label="Shop by store" className="border-y border-line bg-surface">
+    <section aria-label={t("Shop by store")} className="border-y border-line bg-surface">
       <div className="container-page flex flex-col items-center gap-4 py-6 sm:flex-row sm:justify-between">
-        <p className="text-sm font-medium text-muted">Shop the finds from</p>
+        <p className="text-sm font-medium text-muted">{t("Shop the finds from")}</p>
         <ul className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:gap-3">
           {ids.map(({ id, count }) => (
             <li key={id}>
@@ -257,6 +270,7 @@ function StoreStrip({ stores: list }: { stores?: HomePayload["stores"] }) {
 /* ---------------------------------------------------------- Latest reels -- */
 
 function LatestReels({ reels }: { reels?: PublicReel[] }) {
+  const t = useT();
   const scroller = useRef<HTMLDivElement>(null);
   const scrollBy = (dir: 1 | -1) => scroller.current?.scrollBy({ left: dir * scroller.current.clientWidth * 0.8, behavior: "smooth" });
 
@@ -264,12 +278,12 @@ function LatestReels({ reels }: { reels?: PublicReel[] }) {
     <section className="pt-16 sm:pt-24">
       <div className="container-page">
         <div className="flex items-end justify-between gap-6">
-          <SectionHeading className="flex-1" eyebrow="Fresh drops" title="Latest try-on reels" action={{ to: "/reels", label: "Open reels feed" }} />
+          <SectionHeading className="flex-1" eyebrow={t("Fresh drops")} title={t("Latest try-on reels")} action={{ to: "/reels", label: t("Open reels feed") }} />
           <div className="mb-8 hidden gap-2 lg:flex">
-            <button onClick={() => scrollBy(-1)} aria-label="Scroll left" className="grid size-10 place-items-center rounded-full border border-line transition hover:border-accent hover:text-accent">
+            <button onClick={() => scrollBy(-1)} aria-label={t("Scroll left")} className="grid size-10 place-items-center rounded-full border border-line transition hover:border-accent hover:text-accent">
               <ChevronLeft className="size-5" />
             </button>
-            <button onClick={() => scrollBy(1)} aria-label="Scroll right" className="grid size-10 place-items-center rounded-full border border-line transition hover:border-accent hover:text-accent">
+            <button onClick={() => scrollBy(1)} aria-label={t("Scroll right")} className="grid size-10 place-items-center rounded-full border border-line transition hover:border-accent hover:text-accent">
               <ChevronRight className="size-5" />
             </button>
           </div>
@@ -287,7 +301,7 @@ function LatestReels({ reels }: { reels?: PublicReel[] }) {
       </div>
       <div className="container-page sm:hidden">
         <Link to="/reels" className="flex items-center justify-center gap-1.5 rounded-full border border-line py-3 text-sm font-semibold">
-          Open reels feed <ArrowRight className="size-4" />
+          {t("Open reels feed")} <ArrowRight className="size-4" />
         </Link>
       </div>
     </section>
@@ -297,9 +311,10 @@ function LatestReels({ reels }: { reels?: PublicReel[] }) {
 /* ------------------------------------------------------------ Categories -- */
 
 function Categories({ categories }: { categories?: HomePayload["categories"] }) {
+  const t = useT();
   return (
     <section id="categories" className="container-page scroll-mt-24 pt-16 sm:pt-24">
-      <SectionHeading eyebrow="Browse" title="Shop by category" />
+      <SectionHeading eyebrow={t("Browse")} title={t("Shop by category")} />
       <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
         {(categories ?? Array.from({ length: 8 }, () => undefined)).map((c, i) =>
           c ? (
@@ -308,12 +323,12 @@ function Categories({ categories }: { categories?: HomePayload["categories"] }) 
                 to={categoryPath(c.slug)}
                 className="group relative block aspect-[4/5] overflow-hidden rounded-3xl bg-surface-2 shadow-soft"
               >
-                <img src={c.image} alt="" loading="lazy" className="absolute inset-0 size-full object-cover transition duration-700 group-hover:scale-110" />
+                <img {...responsive(c.image, "(min-width: 1024px) 20vw, (min-width: 640px) 33vw, 50vw", 640)} alt="" loading="lazy" decoding="async" className="absolute inset-0 size-full object-cover transition duration-700 group-hover:scale-110" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/5 to-transparent" />
                 <div className="absolute inset-x-0 bottom-0 flex items-end justify-between p-4 text-white">
                   <div>
-                    <h3 className="font-display text-xl font-semibold leading-tight sm:text-2xl">{c.name}</h3>
-                    <p className="mt-0.5 text-xs text-white/75">{c.blurb}</p>
+                    <h3 className="font-display text-xl font-semibold leading-tight sm:text-2xl">{t(c.name)}</h3>
+                    <p className="mt-0.5 text-xs text-white/75">{t(c.blurb)}</p>
                   </div>
                   <span className="grid size-9 shrink-0 place-items-center rounded-full bg-white/20 backdrop-blur transition group-hover:bg-white group-hover:text-neutral-900">
                     <ArrowRight className="size-4" />
@@ -339,9 +354,10 @@ const budgets = [
 ];
 
 function BudgetPicks() {
+  const t = useT();
   return (
     <section id="budget" className="container-page scroll-mt-24 pt-16 sm:pt-24">
-      <SectionHeading eyebrow="Pocket-friendly" title="Looks for every budget" />
+      <SectionHeading eyebrow={t("Pocket-friendly")} title={t("Looks for every budget")} />
       <div className="grid gap-4 md:grid-cols-3">
         {budgets.map((b, i) => (
           <Reveal key={b.max} delay={i * 0.08}>
@@ -351,16 +367,16 @@ function BudgetPicks() {
             >
               {/* Aarti in an outfit from this budget, fading into the card colour */}
               <img
-                src={b.image}
+                {...responsive(b.image, "(min-width: 768px) 12vw, 38vw", 480)}
                 alt=""
                 loading="lazy"
                 className="absolute inset-y-0 right-0 h-full w-[38%] object-cover object-top transition duration-700 [mask-image:linear-gradient(to_right,transparent,black_30%)] group-hover:scale-105"
               />
-              <span className="relative text-xs font-semibold uppercase tracking-[0.2em] opacity-75">Budget picks</span>
+              <span className="relative text-xs font-semibold uppercase tracking-[0.2em] opacity-75">{t("Budget picks")}</span>
               <span className="relative max-w-[60%]">
-                <span className="block font-display text-4xl font-semibold md:text-3xl xl:text-[2.1rem]">{b.label}</span>
+                <span className="block font-display text-4xl font-semibold md:text-3xl xl:text-[2.1rem]">{t(b.label)}</span>
                 <span className="mt-1 flex items-center gap-1.5 text-sm font-medium opacity-80">
-                  {b.sub} <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
+                  {t(b.sub)} <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" />
                 </span>
               </span>
             </Link>
@@ -374,9 +390,10 @@ function BudgetPicks() {
 /* -------------------------------------------------------------- Trending -- */
 
 function Trending({ products }: { products?: HomePayload["trending"] }) {
+  const t = useT();
   return (
     <section className="container-page pt-16 sm:pt-24">
-      <SectionHeading eyebrow="Most clicked" title="Trending finds this week" action={{ to: "/reels", label: "See all reels" }} />
+      <SectionHeading eyebrow={t("Most clicked")} title={t("Trending finds this week")} action={{ to: "/reels", label: t("See all reels") }} />
       <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-4">
         {(products ?? Array.from({ length: 8 }, () => undefined)).map((p, i) =>
           p ? (
@@ -395,6 +412,7 @@ function Trending({ products }: { products?: HomePayload["trending"] }) {
 /* ---------------------------------------------------------- How it works -- */
 
 function HowItWorks() {
+  const t = useT();
   const steps = [
     { icon: Clapperboard, title: "Watch the reel", text: "See how it really fits, moves and looks on a real person, not a studio model." },
     { icon: Hand, title: "Tap “Shop this look”", text: "Every item from the reel, with my honest notes and size tips." },
@@ -403,8 +421,8 @@ function HowItWorks() {
   return (
     <section className="container-page pt-16 sm:pt-24">
       <div className="overflow-hidden rounded-[2rem] bg-ink px-6 py-12 text-bg sm:px-12 sm:py-16">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold">How it works</p>
-        <h2 className="mt-2 max-w-xl font-display text-3xl font-semibold tracking-tight sm:text-4xl">From reel to doorstep in three taps</h2>
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-gold">{t("How it works")}</p>
+        <h2 className="mt-2 max-w-xl font-display text-3xl font-semibold tracking-tight sm:text-4xl">{t("From reel to doorstep in three taps")}</h2>
         <ol className="mt-10 grid gap-8 md:grid-cols-3">
           {steps.map(({ icon: Icon, title, text }, i) => (
             <motion.li
@@ -421,8 +439,8 @@ function HowItWorks() {
                 </span>
                 <span className="font-display text-5xl font-semibold text-bg/15">0{i + 1}</span>
               </div>
-              <h3 className="mt-5 text-lg font-semibold">{title}</h3>
-              <p className="mt-1.5 text-sm leading-relaxed text-bg/65">{text}</p>
+              <h3 className="mt-5 text-lg font-semibold">{t(title)}</h3>
+              <p className="mt-1.5 text-sm leading-relaxed text-bg/65">{t(text)}</p>
             </motion.li>
           ))}
         </ol>
@@ -434,33 +452,28 @@ function HowItWorks() {
 /* ----------------------------------------------------------------- About -- */
 
 function About() {
+  const t = useT();
   const s = useSettings();
   return (
     <section id="about" className="container-page scroll-mt-24 pt-16 sm:pt-24">
       <div className="grid items-center gap-10 md:grid-cols-[0.9fr_1.1fr] lg:gap-16">
         <Reveal className="relative mx-auto w-full max-w-sm">
           <div className="aspect-[4/5] overflow-hidden rounded-[2rem] shadow-lift">
-            <img src={s.meetPortrait} alt="Aarti" loading="lazy" className="size-full object-cover object-top" />
+            <img {...responsive(s.meetPortrait, "(min-width: 768px) 384px, 90vw", 960)} alt={t("Aarti")} loading="lazy" decoding="async" className="size-full object-cover object-top" />
           </div>
           <div className="absolute -bottom-5 -right-3 rounded-2xl border border-line bg-surface px-4 py-3 shadow-lift sm:-right-8">
             <p className="font-display text-2xl font-semibold">{s.stats[0].value}</p>
-            <p className="text-xs text-muted">{s.stats[0].label} trust my picks</p>
+            <p className="text-xs text-muted">{t("{label} trust my picks", { label: t(s.stats[0].label) })}</p>
           </div>
         </Reveal>
         <Reveal>
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">Meet Aarti</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">{t("Meet Aarti")}</p>
           <h2 className="mt-2 font-display text-3xl font-semibold tracking-tight sm:text-4xl text-balance">
-            I spend my money first, so you don't waste yours.
+            {t("I spend my money first, so you don't waste yours.")}
           </h2>
           <div className="mt-5 space-y-4 text-base leading-relaxed text-muted">
-            <p>
-              Every product here is something I ordered with my own money, unboxed and tried on camera. If the fabric is
-              thin or the fit is off, I'll tell you.
-            </p>
-            <p>
-              Links are affiliate links: you pay exactly the same, and a small commission helps me keep buying and
-              reviewing more for you.
-            </p>
+            <p>{t("Every product here is something I ordered with my own money, unboxed and tried on camera. If the fabric is thin or the fit is off, I'll tell you.")}</p>
+            <p>{t("Links are affiliate links: you pay exactly the same, and a small commission helps me keep buying and reviewing more for you.")}</p>
           </div>
           <div className="mt-8 flex flex-wrap gap-3">
             <a
@@ -469,19 +482,19 @@ function About() {
               rel="noopener"
               className="inline-flex items-center gap-2 rounded-full bg-gradient-to-tr from-[#F58529] via-[#DD2A7B] to-[#8134AF] px-5 py-3 text-sm font-semibold text-white shadow-soft transition hover:brightness-110"
             >
-              <InstagramIcon className="size-4" /> Follow on Instagram
+              <InstagramIcon className="size-4" /> {t("Follow on Instagram")}
             </a>
             <Link
               to="/alerts"
               className="inline-flex items-center gap-2 rounded-full bg-[#25D366] px-5 py-3 text-sm font-semibold text-[#073B1D] shadow-soft transition hover:brightness-105"
             >
-              <WhatsAppIcon className="size-4" /> Get loot deals on WhatsApp
+              <WhatsAppIcon className="size-4" /> {t("Get deal alerts")}
             </Link>
             <Link
               to="/about"
               className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-5 py-3 text-sm font-semibold transition hover:border-accent hover:text-accent"
             >
-              More about me <ArrowRight className="size-4" />
+              {t("More about me")} <ArrowRight className="size-4" />
             </Link>
           </div>
         </Reveal>

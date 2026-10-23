@@ -18,8 +18,10 @@ import { ReelCard } from "@/components/ReelCard";
 import { SectionHeading } from "@/components/SectionHeading";
 import { StoreBadge } from "@/components/StoreBadge";
 import NotFound from "./NotFound";
+import { useLang } from "@/lib/i18n";
 
 export default function Look() {
+  const { lang, t } = useLang();
   const { slug = "" } = useParams();
   const code = codeFromLookSlug(slug);
   const { data, loading, error } = useApi<LookPayload>(`/api/looks/${code}`);
@@ -45,12 +47,12 @@ export default function Look() {
 
   return (
     <div className="container-page pb-8 pt-4 sm:pt-6">
-      <nav aria-label="Breadcrumb" className="mb-5 flex items-center gap-1 text-xs text-muted">
-        <Link to="/" className="hover:text-accent">Home</Link>
+      <nav aria-label={t("Breadcrumb")} className="mb-5 flex items-center gap-1 text-xs text-muted">
+        <Link to="/" className="hover:text-accent">{t("Home")}</Link>
         <ChevronRight className="size-3.5" />
         {category && (
           <>
-            <Link to={categoryPath(category.slug)} className="hover:text-accent">{category.name}</Link>
+            <Link to={categoryPath(category.slug)} className="hover:text-accent">{t(category.name)}</Link>
             <ChevronRight className="size-3.5" />
           </>
         )}
@@ -70,16 +72,16 @@ export default function Look() {
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
             <span className="rounded-full bg-accent-soft px-2.5 py-1 font-bold text-accent">#{reel.code}</span>
-            <span>{timeAgo(reel.publishedAt)}</span>
-            <span className="flex items-center gap-1"><Eye className="size-3.5" /> {formatCount(reel.views)} views</span>
+            <span>{timeAgo(reel.publishedAt, t, lang)}</span>
+            <span className="flex items-center gap-1"><Eye className="size-3.5" /> {t("{n} views", { n: formatCount(reel.views) })}</span>
           </div>
           <h1 className="mt-3 font-display text-3xl font-semibold leading-tight tracking-tight text-balance sm:text-4xl">{reel.title}</h1>
           <p className="mt-3 max-w-2xl text-base leading-relaxed text-muted">{reel.caption}</p>
 
           <div className="mt-4 flex flex-wrap gap-2">
-            {reel.tags.map((t) => (
-              <Link key={t} to={`/search?q=${encodeURIComponent(t)}`} className="rounded-full border border-line px-3 py-1 text-xs font-medium text-ink/75 transition hover:border-accent hover:text-accent">
-                #{t.replace(/\s+/g, "")}
+            {reel.tags.map((tag) => (
+              <Link key={tag} to={`/search?q=${encodeURIComponent(tag)}`} className="rounded-full border border-line px-3 py-1 text-xs font-medium text-ink/75 transition hover:border-accent hover:text-accent">
+                #{tag.replace(/\s+/g, "")}
               </Link>
             ))}
           </div>
@@ -92,7 +94,7 @@ export default function Look() {
                 saved ? "border-accent bg-accent-soft text-accent" : "border-line bg-surface hover:border-accent hover:text-accent",
               )}
             >
-              <Heart className={cn("size-4", saved && "fill-current")} /> {saved ? "Saved" : "Save look"}
+              <Heart className={cn("size-4", saved && "fill-current")} /> {saved ? t("Saved") : t("Save look")}
             </button>
             <a
               href={whatsappShareUrl(reel)}
@@ -100,27 +102,28 @@ export default function Look() {
               rel="noopener"
               className="inline-flex items-center gap-2 rounded-full bg-[#25D366] px-4 py-2.5 text-sm font-semibold text-[#073B1D] transition hover:brightness-105"
             >
-              <WhatsAppIcon className="size-4" /> Share on WhatsApp
+              <WhatsAppIcon className="size-4" /> {t("Share on WhatsApp")}
             </a>
             <button onClick={copy} className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-4 py-2.5 text-sm font-semibold transition hover:border-accent hover:text-accent">
-              {copied ? <Copy className="size-4" /> : <Link2 className="size-4" />} {copied ? "Link copied" : "Copy link"}
+              {copied ? <Copy className="size-4" /> : <Link2 className="size-4" />} {copied ? t("Link copied") : t("Copy link")}
             </button>
             {"share" in navigator && (
               <button onClick={() => shareReel(reel)} className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-4 py-2.5 text-sm font-semibold transition hover:border-accent hover:text-accent">
-                <Send className="size-4" /> Share
+                <Send className="size-4" /> {t("Share")}
               </button>
             )}
             <Link to={`/reels?start=${reel.code}`} className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-4 py-2.5 text-sm font-semibold transition hover:border-accent hover:text-accent">
-              <Clapperboard className="size-4" /> Watch in reels feed
+              <Clapperboard className="size-4" /> {t("Watch in reels feed")}
             </Link>
           </div>
 
           <section id="shop" className="mt-10 scroll-mt-24" aria-labelledby="shop-heading">
             <div className="flex flex-wrap items-end justify-between gap-3">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">Shop this look</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-accent">{t("Shop this look")}</p>
                 <h2 id="shop-heading" className="mt-1 font-display text-2xl font-semibold">
-                  {reel.products.length} {reel.products.length === 1 ? "item" : "items"} from {storeIds.length} {storeIds.length === 1 ? "store" : "stores"}
+                  {t(reel.products.length === 1 ? "{n} item" : "{n} items", { n: reel.products.length })}{" "}
+                  {t(storeIds.length === 1 ? "from {n} store" : "from {n} stores", { n: storeIds.length })}
                 </h2>
               </div>
               <div className="flex flex-wrap gap-1.5">
@@ -132,8 +135,7 @@ export default function Look() {
             </div>
             <p className="mt-5 flex items-start gap-2 rounded-2xl bg-surface-2 p-4 text-xs leading-relaxed text-muted">
               <ShieldCheck className="mt-0.5 size-4 shrink-0 text-accent" />
-              I bought and tried everything in this reel. Buttons open {storeIds.map((s) => stores[s].name).join(", ")} at
-              the same price you'd pay anyway; I may earn a small commission. Prices are approximate and can change on the store.
+              {t("I bought and tried everything in this reel. Buttons open {stores} at the same price you'd pay anyway; I may earn a small commission. Prices are approximate and can change on the store.", { stores: storeIds.map((s) => stores[s].name).join(", ") })}
             </p>
           </section>
         </div>
@@ -141,7 +143,7 @@ export default function Look() {
 
       {similar.length > 0 && (
         <section className="pt-16 sm:pt-20">
-          <SectionHeading eyebrow="You may also like" title="Similar looks" action={category && { to: categoryPath(category.slug), label: `More ${category.name}` }} />
+          <SectionHeading eyebrow={t("You may also like")} title={t("Similar looks")} action={category && { to: categoryPath(category.slug), label: t("More {name}", { name: t(category.name) }) }} />
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-6">
             {similar.map((r) => <ReelCard key={r.code} reel={r} to={lookPath(r)} />)}
           </div>

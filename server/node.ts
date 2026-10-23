@@ -13,6 +13,7 @@ import { createDemoSource } from "./data/demo";
 import { runMigrations, seedDemoIfEmpty } from "./db/setup";
 import { esc, renderLookHtml, withMeta } from "./seo";
 import { createImageCache, lookImage, siteImage } from "./og";
+import { resizeImage } from "./images";
 import { publicOrigin } from "./origin";
 import { media } from "./repo";
 import { codeFromLookSlug } from "../shared/paths";
@@ -24,6 +25,14 @@ if (existsSync(".env")) process.loadEnvFile(".env");
 
 const root = path.resolve(process.cwd(), "dist");
 let indexHtml = await readFile(path.join(root, "index.html"), "utf8");
+// Lets the site resize images from the media bucket too (see src/lib/img.ts).
+if (process.env.MEDIA_BASE_URL) {
+  try {
+    indexHtml = indexHtml.replace("</head>", `    <meta name="media-host" content="${esc(new URL(process.env.MEDIA_BASE_URL).hostname)}" />\n    <link rel="preconnect" href="${esc(new URL(process.env.MEDIA_BASE_URL).origin)}" />\n  </head>`);
+  } catch {
+    console.log("MEDIA_BASE_URL is not a valid URL");
+  }
+}
 // Google Search Console ownership check (Settings → Ownership verification → HTML tag).
 if (process.env.GOOGLE_SITE_VERIFICATION) {
   indexHtml = indexHtml.replace("</head>", `    <meta name="google-site-verification" content="${esc(process.env.GOOGLE_SITE_VERIFICATION)}" />\n  </head>`);
@@ -44,7 +53,7 @@ if (!process.env.ADMIN_PASSWORD) console.log("Admin panel disabled: set ADMIN_PA
 // Link checks and Instagram sync run on a timer while the server is awake.
 source.ops?.jobs.schedule();
 
-const { app: api, repoFor } = createApp(() => source);
+const { app: api, repoFor } = createApp(() => source, { resizeImage });
 const app = new Hono();
 
 app.use("*", compress());
@@ -62,6 +71,16 @@ app.use(
   },
   serveStatic({ root: "./dist" }),
 );
+// The service worker and manifest must update as soon as a new version is deployed.
+app.use("/sw.js", async (c, next) => {
+  await next();
+  c.header("Cache-Control", "no-cache");
+});
+app.use("/manifest.webmanifest", async (c, next) => {
+  await next();
+  c.header("Cache-Control", "public, max-age=3600");
+  c.header("Content-Type", "application/manifest+json");
+});
 app.use("/images/*", async (c, next) => {
   await next();
   c.header("Cache-Control", "public, max-age=86400");

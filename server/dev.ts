@@ -4,6 +4,7 @@
 // a new connection pool every time.
 import { existsSync } from "node:fs";
 import { createApp } from "./app";
+import { resizeImage } from "./images";
 import { connect, createDbSource } from "./data/db";
 import { createDemoSource } from "./data/demo";
 import { runMigrations, seedDemoIfEmpty } from "./db/setup";
@@ -22,4 +23,4 @@ g.__aartiSource ??= (async () => {
 })();
 
 const source = await g.__aartiSource;
-export default createApp(() => source).app;
+export default createApp(() => source, { resizeImage }).app;

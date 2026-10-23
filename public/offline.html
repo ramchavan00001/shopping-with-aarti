@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en-IN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>You're offline · Shopping with Aarti</title>
+    <meta name="theme-color" content="#FBF7F3" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <style>
+      :root { --bg: #fbf7f3; --ink: #1f1a17; --muted: #6f625b; --accent: #8e2c48; }
+      @media (prefers-color-scheme: dark) { :root { --bg: #141012; --ink: #f6eee9; --muted: #b3a49c; --accent: #e0789a; } }
+      * { box-sizing: border-box; }
+      body { margin: 0; min-height: 100dvh; display: grid; place-items: center; padding: 24px; background: var(--bg); color: var(--ink); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; text-align: center; }
+      img { width: 72px; height: 72px; border-radius: 18px; }
+      h1 { font: italic 600 28px/1.2 Georgia, serif; margin: 20px 0 8px; }
+      p { color: var(--muted); margin: 0 auto 6px; max-width: 22rem; }
+      button { margin-top: 20px; border: 0; border-radius: 999px; padding: 12px 24px; background: var(--accent); color: #fff; font: 600 15px system-ui, sans-serif; cursor: pointer; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <img src="/icons/icon-192.png" alt="" />
+      <h1>You're offline</h1>
+      <p>Check your internet connection and try again. Looks you've opened before still work.</p>
+      <p lang="hi">आप ऑफ़लाइन हैं। इंटरनेट कनेक्शन चेक करके फिर से कोशिश करें।</p>
+      <button onclick="location.reload()">Try again · फिर से कोशिश करें</button>
+    </main>
+  </body>
+</html>

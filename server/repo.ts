@@ -57,29 +57,37 @@ const canShowPrice = (store: StoreId) => store !== "amazon";
 
 /* ---------------------------------------------------------------- Search -- */
 
-// Spellings followers actually type. A search term matches if any word in
-// its group appears, so "kurta" also finds "kurti" and "kurtis".
+// Spellings followers actually type, in English and Hindi. A search term
+// matches if any word in its group appears, so "kurta" (or "कुर्ती") also
+// finds "kurti" and "kurtis".
 const synonymGroups = [
-  ["kurti", "kurta", "kurtis", "kurtas", "anarkali"],
-  ["saree", "sari", "sarees", "saris"],
-  ["lehenga", "lehnga", "lehengas"],
-  ["earrings", "earring", "jhumka", "jhumkas"],
-  ["co-ord", "coord", "co ord", "cord set"],
-  ["heels", "heel", "stiletto", "stilettos"],
-  ["bag", "bags", "purse", "handbag", "clutch", "sling"],
-  ["shoes", "sneakers", "sandals", "footwear"],
-  ["dress", "dresses", "gown"],
-  ["makeup", "lipstick", "mascara", "blush", "powder", "beauty"],
-  ["necklace", "chain", "pendant", "jewellery", "jewelry"],
+  ["kurti", "kurta", "kurtis", "kurtas", "anarkali", "कुर्ती", "कुर्ता", "कुर्तियां", "कुर्तियाँ"],
+  ["saree", "sari", "sarees", "saris", "साड़ी", "साड़ियां", "साड़ियाँ"],
+  ["lehenga", "lehnga", "lehengas", "लहंगा", "लहँगा"],
+  ["earrings", "earring", "jhumka", "jhumkas", "झुमका", "झुमके", "बाली", "बालियां", "ईयररिंग"],
+  ["co-ord", "coord", "co ord", "cord set", "को-ऑर्ड"],
+  ["heels", "heel", "stiletto", "stilettos", "हील", "हील्स"],
+  ["bag", "bags", "purse", "handbag", "clutch", "sling", "बैग", "पर्स"],
+  ["shoes", "sneakers", "sandals", "footwear", "जूते", "सैंडल", "चप्पल", "फ़ुटवियर", "स्नीकर्स", "स्नीकर"],
+  ["dress", "dresses", "gown", "ड्रेस", "गाउन"],
+  ["makeup", "lipstick", "mascara", "blush", "powder", "beauty", "मेकअप", "लिपस्टिक"],
+  ["necklace", "chain", "pendant", "jewellery", "jewelry", "हार", "नेकलेस", "ज्वेलरी", "गहने"],
+  ["top", "tops", "टॉप"],
+  ["jeans", "जींस"],
+  ["red", "लाल"], ["black", "काला", "काली"], ["white", "सफ़ेद", "सफेद"], ["pink", "गुलाबी"], ["yellow", "पीला", "पीली"],
+  ["blue", "नीला", "नीली"], ["green", "हरा", "हरी"], ["gold", "golden", "सुनहरा", "गोल्डन"],
+  ["party", "पार्टी"], ["wedding", "शादी"], ["festive", "festival", "त्योहार"], ["office", "ऑफ़िस", "ऑफिस"], ["college", "कॉलेज"],
 ];
 const synonymIndex = new Map<string, string[]>();
-for (const group of synonymGroups) for (const word of group) synonymIndex.set(word, group);
+// NFC, so "ड़" typed as ड + ़ still matches.
+for (const group of synonymGroups) for (const word of group) synonymIndex.set(word.normalize("NFC"), group);
 
 /** Each search term becomes a list of acceptable spellings. */
 function tokens(q: string): string[][] {
   return q
+    .normalize("NFC")
     .toLowerCase()
-    .replace(/[#₹,]/g, " ")
+    .replace(/[#₹,।]/g, " ")
     .split(/\s+/)
     .filter(Boolean)
     .map((t) => synonymIndex.get(t) ?? [t]);
@@ -87,7 +95,8 @@ function tokens(q: string): string[][] {
 
 /** "under 500" / "below ₹999" becomes a price cap instead of search words. */
 function parsePriceCap(q: string): { rest: string; maxPrice?: number } {
-  const m = q.match(/\b(?:under|below|within|less than)\s*₹?\s*(\d{2,6})\b/i);
+  // English "under 500", or Hindi "500 से कम" / "500 के अंदर" / "500 तक".
+  const m = q.match(/\b(?:under|below|within|less than)\s*₹?\s*(\d{2,6})\b/i) ?? q.match(/₹?\s*(\d{2,6})\s*(?:रुपये|रुपए|रु\.?)?\s*(?:से कम|के अंदर|के अन्दर|तक)/);
   if (!m) return { rest: q };
   return { rest: q.replace(m[0], " ").trim(), maxPrice: Number(m[1]) };
 }

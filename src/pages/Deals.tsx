@@ -3,25 +3,28 @@ import { ArrowUpRight, BellRing, CalendarDays, Check, Copy, Flame, Timer, Zap } 
 import { useState } from "react";
 import { Link } from "react-router";
 import type { DealsPayload, PublicLootDeal, PublicSaleEvent } from "@shared/types";
-import { useSettings } from "@/lib/settings";
 import { stores } from "@shared/stores";
 import { useApi } from "@/lib/api";
 import { cn, discountPct, formatPrice } from "@/lib/format";
 import { usePageMeta } from "@/lib/meta";
 import { CountdownBlocks, CountdownText, useNow } from "@/components/Countdown";
 import { WhatsAppAlerts } from "@/components/WhatsAppAlerts";
+import { AppAlerts } from "@/components/AppAlerts";
 import { SectionHeading } from "@/components/SectionHeading";
 import { StoreBadge } from "@/components/StoreBadge";
+import { responsive } from "@/lib/img";
+import { useLang, useT } from "@/lib/i18n";
 
-const dateRange = (a: string, b: string) => {
-  const f = (s: string) => new Date(s).toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: "Asia/Kolkata" });
+const dateRange = (a: string, b: string, lang: string) => {
+  const f = (s: string) => new Date(s).toLocaleDateString(lang === "hi" ? "hi-IN" : "en-IN", { day: "numeric", month: "short", timeZone: "Asia/Kolkata" });
   return `${f(a)} – ${f(b)}`;
 };
 
 export default function Deals() {
+  const t = useT();
   const { data, error } = useApi<DealsPayload>("/api/deals");
   const now = useNow();
-  usePageMeta("Deals & sale calendar", "Live sales, upcoming sale dates and short-lived loot deals on fashion from Amazon, Flipkart, Meesho and Myntra.");
+  usePageMeta(t("Deals & sale calendar"), t("Live sales, upcoming sale dates and short-lived loot deals on fashion from Amazon, Flipkart, Meesho and Myntra."));
 
   // Re-derive status on the client so cards flip from upcoming to live without a reload.
   const events = (data?.events ?? []).map((e) => ({
@@ -37,17 +40,17 @@ export default function Deals() {
     <div className="pb-8">
       <section className="container-page pt-8 sm:pt-12">
         <p className="inline-flex items-center gap-2 rounded-full bg-accent-soft px-3 py-1.5 text-xs font-semibold text-accent">
-          <Flame className="size-3.5" /> Updated daily by Aarti
+          <Flame className="size-3.5" /> {t("Updated daily by Aarti")}
         </p>
         <h1 className="mt-4 font-display text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
-          Deals worth waking up for
+          {t("Deals worth waking up for")}
         </h1>
         <p className="mt-3 max-w-xl text-muted">
-          Live sales, the dates of upcoming ones, and loot deals I've spotted that won't last long.
+          {t("Live sales, the dates of upcoming ones, and loot deals I've spotted that won't last long.")}
         </p>
       </section>
 
-      {error && <p className="container-page mt-8 text-sm text-muted">Couldn't load deals right now. Please refresh.</p>}
+      {error && <p className="container-page mt-8 text-sm text-muted">{t("Couldn't load deals right now. Please refresh.")}</p>}
 
       {!data && !error && (
         <div className="container-page mt-8 grid gap-4">
@@ -61,12 +64,12 @@ export default function Deals() {
             <span className="mx-auto grid size-14 place-items-center rounded-full bg-accent-soft text-accent">
               <Flame className="size-6" />
             </span>
-            <h2 className="mt-4 font-display text-2xl font-semibold">No deals right now</h2>
+            <h2 className="mt-4 font-display text-2xl font-semibold">{t("No deals right now")}</h2>
             <p className="mt-2 text-sm text-muted">
-              Big sales and price drops show up here as soon as I find them. Meanwhile, browse looks for every budget.
+              {t("Big sales and price drops show up here as soon as I find them. Meanwhile, browse looks for every budget.")}
             </p>
             <Link to="/#budget" className="mt-5 inline-flex rounded-full bg-accent px-5 py-3 text-sm font-semibold text-accent-ink">
-              Shop budget picks
+              {t("Shop budget picks")}
             </Link>
           </div>
         </section>
@@ -82,7 +85,7 @@ export default function Deals() {
 
       {loot.length > 0 && (
         <section className="container-page pt-16">
-          <SectionHeading eyebrow="Hurry" title="Loot deals ending soon" />
+          <SectionHeading eyebrow={t("Hurry")} title={t("Loot deals ending soon")} />
           <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
             {loot.map((d, i) => (
               <motion.div key={d.id} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: (i % 4) * 0.05 }}>
@@ -95,14 +98,15 @@ export default function Deals() {
 
       {upcoming.length > 0 && (
         <section className="container-page pt-16">
-          <SectionHeading eyebrow="Mark your calendar" title="Upcoming sales" />
+          <SectionHeading eyebrow={t("Mark your calendar")} title={t("Upcoming sales")} />
           <ol className="relative space-y-4 border-l-2 border-dashed border-line pl-6 sm:pl-8">
             {upcoming.map((e) => <UpcomingRow key={e.id} event={e} />)}
           </ol>
         </section>
       )}
 
-      <div className="container-page pt-16">
+      <div className="container-page space-y-6 pt-16">
+        <AppAlerts />
         <WhatsAppAlerts />
       </div>
     </div>
@@ -115,6 +119,7 @@ function storeGradient(store: PublicSaleEvent["store"]) {
 }
 
 function FeaturedSale({ event }: { event: PublicSaleEvent }) {
+  const t = useT();
   return (
     <section className="container-page mt-8">
       <div className="relative overflow-hidden rounded-[2rem] px-6 py-8 text-white shadow-lift sm:px-10 sm:py-12" style={storeGradient(event.store)}>
@@ -122,7 +127,7 @@ function FeaturedSale({ event }: { event: PublicSaleEvent }) {
         <div className="relative grid gap-8 lg:grid-cols-[1.3fr_1fr] lg:items-center">
           <div>
             <span className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-xs font-bold uppercase tracking-wider backdrop-blur">
-              <span className="size-2 animate-pulse rounded-full bg-white" /> Live now on {stores[event.store].name}
+              <span className="size-2 animate-pulse rounded-full bg-white" /> {t("Live now on {store}", { store: stores[event.store].name })}
             </span>
             <h2 className="mt-4 font-display text-4xl font-semibold leading-tight sm:text-5xl">{event.name}</h2>
             <p className="mt-2 text-lg text-white/85">{event.headline}</p>
@@ -135,7 +140,7 @@ function FeaturedSale({ event }: { event: PublicSaleEvent }) {
             </ul>
           </div>
           <div className="lg:justify-self-end">
-            <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-white/80"><Timer className="size-3.5" /> Ends in</p>
+            <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-white/80"><Timer className="size-3.5" /> {t("Ends in")}</p>
             <CountdownBlocks to={event.endsAt} />
             <a
               href={event.href}
@@ -143,7 +148,7 @@ function FeaturedSale({ event }: { event: PublicSaleEvent }) {
               rel="sponsored noopener"
               className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-white px-6 py-3.5 text-sm font-bold text-neutral-900 transition hover:bg-neutral-100 active:scale-[0.98]"
             >
-              Shop the sale on {stores[event.store].name} <ArrowUpRight className="size-4" />
+              {t("Shop the sale on {store}", { store: stores[event.store].name })} <ArrowUpRight className="size-4" />
             </a>
           </div>
         </div>
@@ -153,15 +158,16 @@ function FeaturedSale({ event }: { event: PublicSaleEvent }) {
 }
 
 function LiveSaleCard({ event }: { event: PublicSaleEvent }) {
+  const t = useT();
   return (
     <a href={event.href} target="_blank" rel="sponsored noopener" className="group flex items-center justify-between gap-4 rounded-3xl p-5 text-white shadow-soft transition hover:-translate-y-0.5 hover:shadow-lift" style={storeGradient(event.store)}>
       <div className="min-w-0">
-        <p className="text-xs font-bold uppercase tracking-wider text-white/80">Live · {stores[event.store].name}</p>
+        <p className="text-xs font-bold uppercase tracking-wider text-white/80">{t("Live")} · {stores[event.store].name}</p>
         <h3 className="mt-1 truncate font-display text-2xl font-semibold">{event.name}</h3>
         <p className="mt-0.5 truncate text-sm text-white/80">{event.headline}</p>
       </div>
       <div className="shrink-0 text-right">
-        <p className="text-[10px] font-semibold uppercase tracking-wider text-white/70">Ends in</p>
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-white/70">{t("Ends in")}</p>
         <p className="font-display text-xl font-semibold"><CountdownText to={event.endsAt} /></p>
         <ArrowUpRight className="ml-auto mt-1 size-5 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
       </div>
@@ -170,6 +176,7 @@ function LiveSaleCard({ event }: { event: PublicSaleEvent }) {
 }
 
 function LootCard({ deal }: { deal: PublicLootDeal }) {
+  const t = useT();
   const now = useNow();
   const [copied, setCopied] = useState(false);
   const urgent = Date.parse(deal.expiresAt) - now < 6 * 3600_000;
@@ -185,10 +192,10 @@ function LootCard({ deal }: { deal: PublicLootDeal }) {
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-3xl border border-line bg-surface shadow-soft transition hover:-translate-y-1 hover:shadow-lift">
       <a href={deal.href} target="_blank" rel="sponsored noopener" className="relative block aspect-square overflow-hidden bg-surface-2">
-        <img src={deal.image} alt={deal.title} loading="lazy" className="size-full object-cover transition duration-700 group-hover:scale-105" />
+        <img {...responsive(deal.image, "(min-width: 1024px) 22vw, (min-width: 640px) 33vw, 50vw", 640)} alt={deal.title} loading="lazy" decoding="async" className="size-full object-cover transition duration-700 group-hover:scale-105" />
         <StoreBadge store={deal.store} className="absolute left-3 top-3" />
         {deal.showPrice && off > 0 && (
-          <span className="absolute right-3 top-3 rounded-full bg-emerald-600 px-2 py-1 text-[11px] font-bold text-white">{off}% OFF</span>
+          <span className="absolute right-3 top-3 rounded-full bg-emerald-600 px-2 py-1 text-[11px] font-bold text-white">{t("{n}% OFF", { n: off })}</span>
         )}
         <span
           className={cn(
@@ -197,7 +204,7 @@ function LootCard({ deal }: { deal: PublicLootDeal }) {
           )}
         >
           {urgent ? <Zap className="size-3.5 animate-pulse" /> : <Timer className="size-3.5" />}
-          Ends in <CountdownText to={deal.expiresAt} />
+          {t("Ends in")} <CountdownText to={deal.expiresAt} />
         </span>
       </a>
       <div className="flex flex-1 flex-col gap-2 p-4">
@@ -208,13 +215,13 @@ function LootCard({ deal }: { deal: PublicLootDeal }) {
             <span className="text-xs text-muted line-through">{formatPrice(deal.mrp)}</span>
           </p>
         ) : (
-          <p className="text-sm text-muted">Deal price live on {stores[deal.store].name}</p>
+          <p className="text-sm text-muted">{t("Deal price live on {store}", { store: stores[deal.store].name })}</p>
         )}
         {deal.note && <p className="text-xs italic text-muted">“{deal.note}”</p>}
         {deal.coupon && (
           <button onClick={copyCoupon} className="flex items-center justify-between rounded-xl border border-dashed border-accent/50 bg-accent-soft/50 px-3 py-2 text-xs">
-            <span>Code <b className="font-mono text-accent">{deal.coupon}</b></span>
-            <span className="flex items-center gap-1 font-semibold text-accent">{copied ? <><Check className="size-3.5" /> Copied</> : <><Copy className="size-3.5" /> Copy</>}</span>
+            <span>{t("Code")} <b className="font-mono text-accent">{deal.coupon}</b></span>
+            <span className="flex items-center gap-1 font-semibold text-accent">{copied ? <><Check className="size-3.5" /> {t("Copied")}</> : <><Copy className="size-3.5" /> {t("Copy")}</>}</span>
           </button>
         )}
         <a
@@ -223,7 +230,7 @@ function LootCard({ deal }: { deal: PublicLootDeal }) {
           rel="sponsored noopener"
           className="mt-auto inline-flex items-center justify-center gap-1.5 rounded-full bg-ink px-4 py-2.5 text-sm font-semibold text-bg transition hover:bg-accent hover:text-accent-ink"
         >
-          Grab deal <ArrowUpRight className="size-4" />
+          {t("Grab deal")} <ArrowUpRight className="size-4" />
         </a>
       </div>
     </article>
@@ -231,7 +238,7 @@ function LootCard({ deal }: { deal: PublicLootDeal }) {
 }
 
 function UpcomingRow({ event }: { event: PublicSaleEvent }) {
-  const s = useSettings();
+  const { lang, t } = useLang();
   const now = useNow();
   const days = Math.ceil((Date.parse(event.startsAt) - now) / 86_400_000);
   return (
@@ -241,25 +248,20 @@ function UpcomingRow({ event }: { event: PublicSaleEvent }) {
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <StoreBadge store={event.store} />
-            <span className="flex items-center gap-1 text-xs text-muted"><CalendarDays className="size-3.5" /> {dateRange(event.startsAt, event.endsAt)}</span>
+            <span className="flex items-center gap-1 text-xs text-muted"><CalendarDays className="size-3.5" /> {dateRange(event.startsAt, event.endsAt, lang)}</span>
           </div>
           <h3 className="mt-2 font-display text-xl font-semibold">{event.name}</h3>
           <p className="text-sm text-muted">{event.headline}</p>
         </div>
         <div className="flex shrink-0 items-center gap-3">
           <div className="text-right">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">Starts in</p>
-            <p className="font-display text-xl font-semibold">{days <= 1 ? <CountdownText to={event.startsAt} /> : `${days} days`}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">{t("Starts in")}</p>
+            <p className="font-display text-xl font-semibold">{days <= 1 ? <CountdownText to={event.startsAt} /> : t("{n} days", { n: days })}</p>
           </div>
-          {s.whatsappChannelUrl ? (
-            <a href={s.whatsappChannelUrl} target="_blank" rel="noopener" className="inline-flex items-center gap-1.5 rounded-full border border-line px-4 py-2.5 text-xs font-semibold transition hover:border-accent hover:text-accent">
-              <BellRing className="size-3.5" /> Remind me
-            </a>
-          ) : (
-            <Link to="/alerts" className="inline-flex items-center gap-1.5 rounded-full border border-line px-4 py-2.5 text-xs font-semibold transition hover:border-accent hover:text-accent">
-              <BellRing className="size-3.5" /> Remind me
-            </Link>
-          )}
+          {/* /alerts offers notifications and WhatsApp */}
+          <Link to="/alerts" className="inline-flex items-center gap-1.5 rounded-full border border-line px-4 py-2.5 text-xs font-semibold transition hover:border-accent hover:text-accent">
+            <BellRing className="size-3.5" /> {t("Remind me")}
+          </Link>
         </div>
       </div>
     </li>

@@ -3,7 +3,9 @@ import { Outlet, Route, Routes, useLocation } from "react-router";
 import { Footer } from "./components/Footer";
 import { Header } from "./components/Header";
 import { MobileNav } from "./components/MobileNav";
+import { InstallBanner } from "./components/AppAlerts";
 import Home from "./pages/Home";
+import { useT } from "@/lib/i18n";
 
 const Reels = lazy(() => import("./pages/Reels"));
 const Search = lazy(() => import("./pages/Search"));
@@ -32,10 +34,11 @@ function ScrollManager() {
 }
 
 function SiteLayout() {
+  const t = useT();
   return (
     <>
       <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-full focus:bg-surface focus:px-4 focus:py-2">
-        Skip to content
+        {t("Skip to content")}
       </a>
       <Header />
       <main id="main">
@@ -44,6 +47,7 @@ function SiteLayout() {
         </Suspense>
       </main>
       <Footer />
+      <InstallBanner />
       <MobileNav />
     </>
   );

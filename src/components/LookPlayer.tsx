@@ -2,9 +2,12 @@ import { Pause, Play, Volume2, VolumeX } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import type { PublicReel } from "@shared/types";
 import { reachedPlayThreshold, trackEvent } from "@/lib/track";
+import { imgUrl } from "@/lib/img";
+import { useT } from "@/lib/i18n";
 
 /** Inline 9:16 player for look pages: autoplays muted, tap to pause. */
 export function LookPlayer({ reel }: { reel: PublicReel }) {
+  const t = useT();
   const ref = useRef<HTMLVideoElement>(null);
   const [muted, setMuted] = useState(true);
   const [paused, setPaused] = useState(false);
@@ -28,7 +31,7 @@ export function LookPlayer({ reel }: { reel: PublicReel }) {
         key={reel.code}
         ref={ref}
         src={reel.video}
-        poster={reel.poster}
+        poster={imgUrl(reel.poster, 960)}
         muted={muted}
         loop
         playsInline
@@ -41,7 +44,7 @@ export function LookPlayer({ reel }: { reel: PublicReel }) {
         }}
         className="absolute inset-0 size-full object-cover"
       />
-      <button onClick={() => setPaused((p) => !p)} aria-label={paused ? "Play" : "Pause"} className="absolute inset-0" />
+      <button onClick={() => setPaused((p) => !p)} aria-label={paused ? t("Play") : t("Pause")} className="absolute inset-0" />
       {paused && (
         <span className="pointer-events-none absolute left-1/2 top-1/2 grid size-16 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-black/40 text-white backdrop-blur">
           <Play className="ml-1 size-7 fill-current" />
@@ -52,14 +55,14 @@ export function LookPlayer({ reel }: { reel: PublicReel }) {
       <div className="absolute right-4 top-4 flex gap-2">
         <button
           onClick={() => setPaused((p) => !p)}
-          aria-label={paused ? "Play" : "Pause"}
+          aria-label={paused ? t("Play") : t("Pause")}
           className="grid size-9 place-items-center rounded-full bg-black/40 text-white backdrop-blur"
         >
           {paused ? <Play className="size-4" /> : <Pause className="size-4" />}
         </button>
         <button
           onClick={() => setMuted((m) => !m)}
-          aria-label={muted ? "Unmute" : "Mute"}
+          aria-label={muted ? t("Unmute") : t("Mute")}
           className="grid size-9 place-items-center rounded-full bg-black/40 text-white backdrop-blur"
         >
           {muted ? <VolumeX className="size-4" /> : <Volume2 className="size-4" />}
