@@ -3,6 +3,7 @@ import webpush from "web-push";
 import type { PushMessageRow, PushStatus } from "../../shared/admin";
 import type { Db } from "../data/db";
 import * as schema from "../db/schema";
+import { langPath, splitLangPath, type Lang } from "../../shared/i18n";
 import type { SubscriptionInput } from "../../shared/push";
 import type { ErrorLog } from "./errors";
 
@@ -51,10 +52,12 @@ export function createPush(db: Db, errors: ErrorLog, siteUrl: () => string) {
   });
 
   /** Absolute link with the message id, so clicks and visits are counted. */
-  function link(url: string) {
+  function link(url: string, lang: Lang = "en") {
     const u = new URL(url, siteUrl());
     if (!u.searchParams.has("utm_source")) u.searchParams.set("utm_source", "push");
-    return u.origin === new URL(siteUrl()).origin ? u.pathname + u.search : u.href;
+    if (u.origin !== new URL(siteUrl()).origin) return u.href;
+    // Hindi readers open the Hindi page (/hi/deals).
+    return langPath(lang, splitLangPath(u.pathname).path) + u.search;
   }
 
   async function deliver(sub: typeof schema.pushSubscriptions.$inferSelect, payload: string, k: Keys) {
@@ -126,7 +129,7 @@ export function createPush(db: Db, errors: ErrorLog, siteUrl: () => string) {
         const [sub] = await db.select().from(schema.pushSubscriptions).where(eq(schema.pushSubscriptions.endpoint, m.testEndpoint));
         if (!sub) return { test: true, delivered: false };
         const hi = sub.lang === "hi" && m.titleHi && m.bodyHi;
-        const payload = JSON.stringify({ title: hi ? m.titleHi : m.title, body: hi ? m.bodyHi : m.body, url: link(m.url), image: m.image || undefined, tag: "test" });
+        const payload = JSON.stringify({ title: hi ? m.titleHi : m.title, body: hi ? m.bodyHi : m.body, url: link(m.url, sub.lang === "hi" ? "hi" : "en"), image: m.image || undefined, tag: "test" });
         return { test: true, delivered: await deliver(sub, payload, k) };
       }
 
@@ -136,7 +139,7 @@ export function createPush(db: Db, errors: ErrorLog, siteUrl: () => string) {
         .returning();
       const payloads = {
         en: JSON.stringify({ id: msg.id, title: m.title, body: m.body, url: link(m.url), image: m.image || undefined, tag: `msg-${msg.id}` }),
-        hi: JSON.stringify({ id: msg.id, title: m.titleHi || m.title, body: m.bodyHi || m.body, url: link(m.url), image: m.image || undefined, tag: `msg-${msg.id}` }),
+        hi: JSON.stringify({ id: msg.id, title: m.titleHi || m.title, body: m.bodyHi || m.body, url: link(m.url, "hi"), image: m.image || undefined, tag: `msg-${msg.id}` }),
       };
 
       void (async () => {

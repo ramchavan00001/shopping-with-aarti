@@ -12,6 +12,7 @@ import { parseSubscription } from "../shared/push";
 import type { Catalog, DataSource } from "./data/types";
 import { stores } from "../shared/stores";
 import { categoryPath, lookPath } from "../shared/paths";
+import { langPath } from "../shared/i18n";
 import { validateEnquiry } from "../shared/enquiry";
 import { isResizableHost, isSiteImage, snapWidth } from "../shared/images";
 import { colours, occasions, type Colour, type Occasion, type ProductSort, type StoreId } from "../shared/types";
@@ -328,25 +329,34 @@ export function createApp(getSource: SourceResolver, options: AppOptions = {}) {
     return c.body(null, 204);
   });
 
+  // Every page in English and Hindi, each listing the other as an alternate.
   app.get("/sitemap.xml", async (c) => {
     const repo = await repoFor(c);
     const origin = publicOrigin(c.req.raw, env<{ SITE_URL?: string }>(c).SITE_URL);
-    const urls = [
+    const urls: { loc: string; priority: string; lastmod?: string; bilingual?: boolean }[] = [
       { loc: "/", priority: "1.0" },
       { loc: "/reels", priority: "0.9" },
       { loc: "/deals", priority: "0.8" },
       { loc: "/about", priority: "0.6" },
-      { loc: "/privacy", priority: "0.2" },
-      { loc: "/terms", priority: "0.2" },
+      { loc: "/alerts", priority: "0.4" },
+      { loc: "/privacy", priority: "0.2", bilingual: false },
+      { loc: "/terms", priority: "0.2", bilingual: false },
       ...repo.allCategories().map((cat) => ({ loc: categoryPath(cat.slug), priority: "0.8" })),
       ...repo.allReels().map((r) => ({ loc: lookPath(r), priority: "0.7", lastmod: r.publishedAt })),
     ];
-    const body = urls
-      .map((u) => `  <url><loc>${origin}${u.loc}</loc>${"lastmod" in u ? `<lastmod>${u.lastmod}</lastmod>` : ""}<priority>${u.priority}</priority></url>`)
-      .join("\n");
+    const entry = (loc: string, u: (typeof urls)[number]) => {
+      const alternates =
+        u.bilingual === false
+          ? ""
+          : `<xhtml:link rel="alternate" hreflang="en-IN" href="${origin}${u.loc}"/><xhtml:link rel="alternate" hreflang="hi-IN" href="${origin}${langPath("hi", u.loc)}"/><xhtml:link rel="alternate" hreflang="x-default" href="${origin}${u.loc}"/>`;
+      return `  <url><loc>${origin}${loc}</loc>${u.lastmod ? `<lastmod>${u.lastmod}</lastmod>` : ""}<priority>${u.priority}</priority>${alternates}</url>`;
+    };
+    const body = urls.flatMap((u) => [entry(u.loc, u), ...(u.bilingual === false ? [] : [entry(langPath("hi", u.loc), u)])]).join("\n");
     c.header("Content-Type", "application/xml; charset=utf-8");
     c.header("Cache-Control", "public, max-age=3600");
-    return c.body(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${body}\n</urlset>\n`);
+    return c.body(
+      `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml">\n${body}\n</urlset>\n`,
+    );
   });
 
   // Resized images: /img?w=480&src=<site path or image URL>.
@@ -377,7 +387,9 @@ export function createApp(getSource: SourceResolver, options: AppOptions = {}) {
   app.get("/robots.txt", (c) => {
     const origin = publicOrigin(c.req.raw, env<{ SITE_URL?: string }>(c).SITE_URL);
     c.header("Cache-Control", "public, max-age=3600");
-    return c.text(`User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /go/\nDisallow: /api/\n\nSitemap: ${origin}/sitemap.xml\n`);
+    // Public /api/* stays crawlable: Google loads it when it renders the pages.
+    const disallow = ["/admin", "/hi/admin", "/go/", "/api/admin/", "/api/track", "/api/push/", "/api/cron", "/api/client-errors"];
+    return c.text(`User-agent: *\nAllow: /\n${disallow.map((d) => `Disallow: ${d}`).join("\n")}\n\nSitemap: ${origin}/sitemap.xml\n`);
   });
 
   app.route("/api/admin", createAdminApi(getSource));

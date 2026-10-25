@@ -5,24 +5,29 @@ import App from "./App";
 import { installTracking } from "./lib/track";
 import { installErrorReporting } from "./lib/errors";
 import { SettingsProvider } from "./lib/settings";
-import { LanguageProvider, onLanguageChange } from "./lib/i18n";
+import { LanguageProvider, onLanguageChange, startLanguage } from "./lib/i18n";
 import { installPwa } from "./lib/pwa";
 import { updatePushLanguage } from "./lib/push";
 import "./index.css";
 
-installErrorReporting();
-installTracking();
-if (import.meta.env.PROD) installPwa();
-onLanguageChange(updatePushLanguage);
+// null: redirecting to the remembered language's address; render nothing.
+const start = startLanguage();
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <BrowserRouter>
-      <LanguageProvider>
-        <SettingsProvider>
-          <App />
-        </SettingsProvider>
-      </LanguageProvider>
-    </BrowserRouter>
-  </StrictMode>,
-);
+if (start) {
+  installErrorReporting();
+  installTracking();
+  if (import.meta.env.PROD) installPwa();
+  onLanguageChange(updatePushLanguage);
+
+  createRoot(document.getElementById("root")!).render(
+    <StrictMode>
+      <BrowserRouter basename={start.basename}>
+        <LanguageProvider lang={start.lang}>
+          <SettingsProvider>
+            <App />
+          </SettingsProvider>
+        </LanguageProvider>
+      </BrowserRouter>
+    </StrictMode>,
+  );
+}

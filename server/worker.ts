@@ -4,7 +4,8 @@
 // admin panel are served from the Node deployment (Render).
 import { createApp } from "./app";
 import { createDemoSource } from "./data/demo";
-import { renderLookHtml } from "./seo";
+import { renderPage } from "./pages";
+import { mergeSettings } from "../shared/settings";
 
 interface Env {
   ASSETS: Fetcher;
@@ -18,9 +19,16 @@ const { app, repoFor } = createApp(() => source);
 export default {
   async fetch(request: Request, env: Env, ctx: ExecutionContext) {
     const url = new URL(request.url);
-    if (url.pathname.startsWith("/look/") && request.method === "GET") {
-      const [index, repo] = await Promise.all([env.ASSETS.fetch(new Request(new URL("/", url))), repoFor({} as never)]);
-      const { html, status } = renderLookHtml(await index.text(), url, repo, env.MEDIA_BASE_URL || undefined);
+    if ((url.pathname.startsWith("/look/") || url.pathname.startsWith("/hi/look/")) && request.method === "GET") {
+      const [index, repo, cat] = await Promise.all([env.ASSETS.fetch(new Request(new URL("/", url))), repoFor({} as never), source.catalog()]);
+      const { html, status } = renderPage({
+        indexHtml: await index.text(),
+        url,
+        repo,
+        origin: url.origin,
+        settings: mergeSettings(cat.settings),
+        mediaBaseUrl: env.MEDIA_BASE_URL || undefined,
+      });
       return new Response(html, {
         status,
         headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "public, max-age=300" },

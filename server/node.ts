@@ -11,14 +11,13 @@ import { createApp } from "./app";
 import { connect, createDbSource } from "./data/db";
 import { createDemoSource } from "./data/demo";
 import { runMigrations, seedDemoIfEmpty } from "./db/setup";
-import { esc, renderLookHtml, withMeta } from "./seo";
+import { esc } from "./seo";
+import { renderPage } from "./pages";
 import { createImageCache, lookImage, siteImage } from "./og";
 import { resizeImage } from "./images";
 import { publicOrigin } from "./origin";
 import { media } from "./repo";
-import { codeFromLookSlug } from "../shared/paths";
 import { mergeSettings, photoFields } from "../shared/settings";
-import { site } from "../shared/site";
 import type { DataSource } from "./data/types";
 
 if (existsSync(".env")) process.loadEnvFile(".env");
@@ -105,40 +104,33 @@ app.get("/og/site.png", async (c) => {
   return c.body(new Uint8Array(png), 200, { "Content-Type": "image/png", "Cache-Control": "public, max-age=86400" });
 });
 
-// Look pages get reel-specific meta tags for link previews and SEO.
-app.get("/look/*", async (c) => {
-  const repo = await repoFor(c);
-  const url = new URL(c.req.url);
-  const code = codeFromLookSlug(url.pathname.replace(/^\/look\//, ""));
-  const { html, status } = renderLookHtml(indexHtml, url, repo, mediaBase(), origin(c), `${origin(c)}/og/look/${code.toLowerCase()}.png`);
-  c.header("Cache-Control", "public, max-age=300");
-  return c.html(html, status as 200 | 404);
-});
-
-/** Every other page: the site-wide share card. */
-const defaultPage = (c: Context) => {
+// Every page: its own title, description, canonical/hreflang links,
+// structured data and a plain-HTML snapshot, in English and Hindi (/hi/…).
+const page = async (c: Context) => {
+  const [repo, cat] = await Promise.all([repoFor(c), source.catalog()]);
+  const settings = mergeSettings(cat.settings);
+  for (const k of photoFields) settings[k] = media(settings[k], mediaBase());
   const o = origin(c);
-  const tags = [
-    `<title>${esc(site.name)} · Tried-on fashion finds</title>`,
-    `<meta name="description" content="Watch Aarti's try-on reels and shop every look from Amazon, Flipkart, Meesho and Myntra in one tap." />`,
-    `<meta property="og:type" content="website" />`,
-    `<meta property="og:site_name" content="${esc(site.name)}" />`,
-    `<meta property="og:title" content="${esc(site.name)} · Real outfits. Real prices." />`,
-    `<meta property="og:description" content="Tried-on fashion finds from Amazon, Flipkart, Meesho and Myntra." />`,
-    `<meta property="og:url" content="${esc(o + new URL(c.req.url).pathname)}" />`,
-    `<meta property="og:image" content="${o}/og/site.png" />`,
-    `<meta property="og:image:width" content="1200" />`,
-    `<meta property="og:image:height" content="630" />`,
-    `<meta name="twitter:card" content="summary_large_image" />`,
-  ].join("\n    ");
-  if (c.req.path.startsWith("/admin")) c.header("X-Robots-Tag", "noindex");
-  return c.html(withMeta(indexHtml, tags));
+  const { html, status, noindex } = renderPage({
+    indexHtml,
+    url: new URL(c.req.url),
+    repo,
+    origin: o,
+    settings,
+    mediaBaseUrl: mediaBase(),
+    lookImage: (reel) => `${o}/og/look/${reel.code.toLowerCase()}.png`,
+    siteImage: `${o}/og/site.png`,
+  });
+  if (noindex) c.header("X-Robots-Tag", "noindex, follow");
+  // Always revalidate: the page names this deploy's script files.
+  c.header("Cache-Control", "no-cache");
+  return c.html(html, status as 200 | 404);
 };
-app.get("/", defaultPage);
+app.get("/", page);
 app.route("/", api);
 app.use("*", serveStatic({ root: "./dist" }));
 // SPA fallback: unknown paths get index.html so client-side routing works.
-app.get("*", defaultPage);
+app.get("*", page);
 
 const port = Number(process.env.PORT) || 3000;
 serve({ fetch: (req) => app.fetch(req, process.env), port }, () => {

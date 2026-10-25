@@ -38,6 +38,7 @@ async function save(sub: PushSubscription, lang: string) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ subscription: sub.toJSON(), lang, src: visitSource() }),
+    keepalive: true,
   });
   if (!res.ok) throw new Error("Couldn't save the subscription");
 }

@@ -126,3 +126,34 @@
 :lang(hi) [class*="tracking-["] {
   letter-spacing: 0;
 }
+
+/* Server-rendered page text (server/pages.ts) for search engines and slow
+   connections; replaced by the app as soon as it starts. */
+.seo-snapshot {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 4rem;
+  color: var(--muted);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+.seo-snapshot h1 {
+  margin: 1.5rem 0 0.5rem;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 2rem;
+  line-height: 1.2;
+}
+.seo-snapshot h2 {
+  margin: 1.5rem 0 0.5rem;
+  color: var(--ink);
+  font-weight: 600;
+}
+.seo-snapshot nav ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+}
+.seo-snapshot a {
+  color: var(--accent);
+}

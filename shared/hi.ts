@@ -423,4 +423,11 @@ export const hi: Record<string, string> = {
   "followers": "फ़ॉलोअर्स",
   "Followers": "फ़ॉलोअर्स",
   "reels": "रील्स",
+  "Every try-on reel by Aarti, with each outfit and accessory linked: Amazon, Flipkart, Meesho and Myntra.": "Aarti की हर ट्राय-ऑन रील, हर आउटफ़िट और एक्सेसरी के लिंक के साथ: Amazon, Flipkart, Meesho और Myntra।",
+  "Look #{code}": "लुक #{code}",
+  "Shop all {n} items from {stores}.": "{stores} से सभी {n} आइटम ख़रीदें।",
+  "Shop the look": "लुक ख़रीदें",
+  "Shop try-on reels": "ट्राय-ऑन रील्स से ख़रीदें",
+  "Tried-on fashion finds": "पहनकर परखा फ़ैशन",
+  "Watch Aarti's try-on reels and shop every look from Amazon, Flipkart, Meesho and Myntra in one tap.": "Aarti की ट्राय-ऑन रील्स देखें और Amazon, Flipkart, Meesho और Myntra से हर लुक एक टैप में ख़रीदें।",
 };
